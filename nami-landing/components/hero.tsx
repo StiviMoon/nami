@@ -67,7 +67,7 @@ export default function Hero() {
               <span className="bg-gradient-to-r from-nami-orange to-nami-purple bg-clip-text text-transparent">
                 encuentren
               </span>{" "}
-              y pidan directo a tu WhatsApp ASI DE FACIL
+              y pidan directo por WhatsApp
             </motion.h1>
 
             <motion.p
