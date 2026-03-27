@@ -44,48 +44,50 @@ export default function FeedPage() {
     <PageTransition>
       <main className="min-h-screen bg-n-50">
         {/* Header */}
-        <header className="bg-white border-b border-n-100 sticky top-0 z-40">
-          <div className="max-w-6xl mx-auto px-4 py-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Link href="/" className="text-2xl font-display font-bold text-primary shrink-0">
+        <header className="bg-white/95 backdrop-blur-xl border-b border-n-100 sticky top-0 z-40 shadow-sm shadow-n-900/5">
+          <div className="max-w-6xl mx-auto px-4 py-3">
+            <div className="flex items-center gap-3 mb-3">
+              <Link href="/" className="text-xl font-display font-bold text-primary shrink-0 cursor-pointer">
                 ÑAMI
               </Link>
               <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-n-400" />
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-n-400" />
                 <input
                   type="text"
                   placeholder="Buscar restaurantes..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-n-50 rounded-xl border border-n-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                  className="w-full pl-10 pr-4 py-2.5 bg-n-50 rounded-xl border border-n-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-n-400"
                 />
               </div>
               <button
                 onClick={() => setShowFavorites(!showFavorites)}
-                className={`p-2.5 rounded-xl shrink-0 transition-colors ${
-                  showFavorites ? 'bg-red-50 text-red-500' : 'text-n-400 hover:bg-n-50'
-                }`}
                 title="Favoritos"
+                className={`cursor-pointer p-2.5 rounded-xl shrink-0 transition-all ${
+                  showFavorites
+                    ? 'bg-red-50 text-red-500 scale-110'
+                    : 'text-n-400 hover:bg-n-100 hover:text-n-600'
+                }`}
               >
                 <Heart className={`w-5 h-5 ${showFavorites ? 'fill-red-500' : ''}`} />
               </button>
               <Link
                 href="/historial"
-                className="p-2.5 rounded-xl text-n-400 hover:bg-n-50 shrink-0 transition-colors"
                 title="Historial"
+                className="cursor-pointer p-2.5 rounded-xl text-n-400 hover:bg-n-100 hover:text-n-600 shrink-0 transition-all"
               >
                 <Clock className="w-5 h-5" />
               </Link>
             </div>
 
             {/* Category filters */}
-            <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
               <button
                 onClick={() => setCategory('all')}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                   category === 'all'
-                    ? 'bg-primary text-white shadow-sm'
-                    : 'bg-n-100 text-n-600 hover:bg-n-200'
+                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
+                    : 'bg-n-100 text-n-500 hover:bg-n-200'
                 }`}
               >
                 Todos
@@ -94,10 +96,10 @@ export default function FeedPage() {
                 <button
                   key={cat}
                   onClick={() => setCategory(cat)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
                     category === cat
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'bg-n-100 text-n-600 hover:bg-n-200'
+                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
+                      : 'bg-n-100 text-n-500 hover:bg-n-200'
                   }`}
                 >
                   {cat}
@@ -109,10 +111,10 @@ export default function FeedPage() {
 
         {/* Location banner */}
         {!geo.requested && (
-          <div className="max-w-6xl mx-auto px-4 pt-6">
+          <div className="max-w-6xl mx-auto px-4 pt-5">
             <button
               onClick={geo.requestPermission}
-              className="w-full flex items-center justify-center gap-2 bg-primary/5 text-primary border border-primary/20 rounded-xl px-4 py-3 text-sm font-medium hover:bg-primary/10 transition-colors"
+              className="cursor-pointer w-full flex items-center justify-center gap-2 bg-white border border-n-200 rounded-xl px-4 py-3 text-sm font-medium text-n-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
             >
               <MapPinIcon className="w-4 h-4" />
               Activar ubicación para ver restaurantes cercanos
@@ -121,17 +123,36 @@ export default function FeedPage() {
         )}
 
         {/* Grid */}
-        <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          {/* Results header */}
+          {!isLoading && restaurants.length > 0 && (
+            <div className="flex items-center justify-between mb-5">
+              <p className="text-sm text-n-500 font-medium">
+                {showFavorites ? 'Tus favoritos' : `${restaurants.length} restaurante${restaurants.length !== 1 ? 's' : ''}`}
+              </p>
+              {geo.latitude && (
+                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+                  <MapPinIcon className="w-3 h-3" />
+                  Ubicación activa
+                </span>
+              )}
+            </div>
+          )}
+
           {isLoading ? (
             <FeedSkeleton />
           ) : restaurants.length === 0 ? (
             <EmptyState
               icon={Search}
               title="Sin resultados"
-              description="No encontramos restaurantes con esa búsqueda. Intenta con otra categoría o término."
+              description={
+                showFavorites
+                  ? 'Aún no tienes restaurantes favoritos.'
+                  : 'No encontramos restaurantes con esa búsqueda.'
+              }
             />
           ) : (
-            <StaggerContainer className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {restaurants.map((r: any) => (
                 <RestaurantCard key={r.id} restaurant={r} />
               ))}

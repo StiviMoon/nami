@@ -41,6 +41,15 @@ h1, h2, h3, h4, h5, h6 {
   }
 }
 
+/* Scrollbar hide utility */
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
 /* Custom restaurant theme colors (set via inline style) */
 .text-r-primary { color: var(--r-primary, var(--color-primary)); }
 .bg-r-primary { background-color: var(--r-primary, var(--color-primary)); }

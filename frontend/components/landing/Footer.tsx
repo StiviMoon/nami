@@ -1,11 +1,51 @@
 import Link from 'next/link';
 
+const links = {
+  Producto: [
+    { label: 'Ver restaurantes', href: '/feed' },
+    { label: 'Registrar negocio', href: '/register' },
+    { label: 'Planes', href: '#planes' },
+  ],
+  Legal: [
+    { label: 'Términos de uso', href: '#' },
+    { label: 'Privacidad', href: '#' },
+  ],
+};
+
 export function Footer() {
   return (
-    <footer className="py-12 px-4 bg-n-900 text-n-400">
-      <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
-        <Link href="/" className="font-display font-bold text-white text-xl">ÑAMI</Link>
-        <p className="text-sm">© 2026 ÑAMI. Hecho en Yumbo, Colombia.</p>
+    <footer className="bg-n-900 text-n-400 pt-16 pb-10 px-4">
+      <div className="max-w-6xl mx-auto">
+        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 mb-12">
+          {/* Brand */}
+          <div>
+            <Link href="/" className="font-display font-bold text-white text-2xl">ÑAMI</Link>
+            <p className="text-sm mt-3 leading-relaxed text-n-500 max-w-xs">
+              La forma más fácil de descubrir y pedir comida en Yumbo, Colombia.
+            </p>
+          </div>
+
+          {/* Links */}
+          {Object.entries(links).map(([section, items]) => (
+            <div key={section}>
+              <h4 className="text-white font-semibold text-sm mb-4">{section}</h4>
+              <ul className="space-y-2.5">
+                {items.map((item) => (
+                  <li key={item.label}>
+                    <Link href={item.href} className="text-sm text-n-500 hover:text-white transition-colors cursor-pointer">
+                      {item.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-n-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <p className="text-xs text-n-600">© 2026 ÑAMI. Hecho con amor en Yumbo, Colombia.</p>
+          <p className="text-xs text-n-600">Todos los derechos reservados.</p>
+        </div>
       </div>
     </footer>
   );

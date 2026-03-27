@@ -26,3 +26,5 @@ backend/prisma/*.db
 # Misc
 *.log
 NAMI_Estrategia_v2.docx
+
+.claude
