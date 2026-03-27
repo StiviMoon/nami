@@ -19,7 +19,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const take = Math.min(parseInt(limit, 10) || 20, 100);
     const skip = parseInt(offset, 10) || 0;
 
-    // If user provided location, use raw SQL with Haversine for distance sorting
     if (hasGeo) {
       const conditions: string[] = ['"isActive" = true'];
       const params: (string | number)[] = [lat, lng];
@@ -41,10 +40,8 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
       const restaurants = await prisma.$queryRawUnsafe<any[]>(
         `SELECT "id", "slug", "name", "description", "category", "address",
-                "logoUrl" AS "logoUrl", "coverUrl" AS "coverUrl",
-                "themePreset" AS "themePreset", "menuStyle" AS "menuStyle",
-                "plan", "isClosed" AS "isClosed", "whatsapp",
-                "latitude", "longitude",
+                "logoUrl", "coverUrl", "themePreset", "menuStyle",
+                "plan", "isClosed", "whatsapp", "latitude", "longitude",
                 CASE WHEN "latitude" IS NOT NULL AND "longitude" IS NOT NULL THEN
                   (6371 * acos(
                     LEAST(1, cos(radians($1)) * cos(radians("latitude")) *
@@ -66,7 +63,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         ...params
       );
 
-      // Round distance
       const formatted = restaurants.map((r) => ({
         ...r,
         distance: r.distance !== null ? Math.round(r.distance * 10) / 10 : null,
@@ -79,7 +75,6 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
       res.json({ success: true, data: { restaurants: formatted, total: Number(countResult[0].count) } });
     } else {
-      // Standard Prisma query (no geo)
       const where: any = { isActive: true };
       if (category && category !== 'all') where.category = category;
       if (search?.trim()) {
@@ -93,21 +88,10 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
         prisma.restaurant.findMany({
           where,
           select: {
-            id: true,
-            slug: true,
-            name: true,
-            description: true,
-            category: true,
-            address: true,
-            logoUrl: true,
-            coverUrl: true,
-            themePreset: true,
-            menuStyle: true,
-            plan: true,
-            isClosed: true,
-            whatsapp: true,
-            latitude: true,
-            longitude: true,
+            id: true, slug: true, name: true, description: true,
+            category: true, address: true, logoUrl: true, coverUrl: true,
+            themePreset: true, menuStyle: true, plan: true,
+            isClosed: true, whatsapp: true, latitude: true, longitude: true,
           },
           orderBy: [{ plan: 'desc' }, { updatedAt: 'desc' }],
           take,
@@ -123,7 +107,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-// GET /api/restaurants/categories — Categorías únicas
+// GET /api/restaurants/categories
 router.get('/categories', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const categories = await prisma.restaurant.findMany({
@@ -138,15 +122,36 @@ router.get('/categories', async (_req: Request, res: Response, next: NextFunctio
 });
 
 // GET /api/restaurants/:slug — Restaurante por slug
+// Query param: ?includeMenu=true → devuelve restaurant + categorías + items en una sola llamada
 router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const slug = getSingleParam(req.params.slug);
     if (!slug) throw new ApiError(400, 'Slug inválido');
+
+    const includeMenu = getSingleQuery(req.query.includeMenu) === 'true';
+
     const restaurant = await prisma.restaurant.findUnique({
       where: { slug },
+      include: includeMenu
+        ? {
+            categories: {
+              include: {
+                items: { where: { isAvailable: true }, orderBy: { order: 'asc' } },
+              },
+              orderBy: { order: 'asc' },
+            },
+          }
+        : undefined,
     });
+
     if (!restaurant) throw new NotFoundError('Restaurante');
-    res.json({ success: true, data: restaurant });
+
+    if (includeMenu) {
+      const { categories, ...rest } = restaurant as any;
+      res.json({ success: true, data: { restaurant: rest, menu: categories } });
+    } else {
+      res.json({ success: true, data: restaurant });
+    }
   } catch (err) {
     next(err);
   }

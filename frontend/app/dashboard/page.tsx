@@ -1,7 +1,6 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
+import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { UtensilsCrossed, Eye, QrCode, Star, FolderOpen, ChefHat, CircleDot, Link2 } from 'lucide-react';
 import Link from 'next/link';
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedNumber, FadeIn } from '@/components/motion';
@@ -12,12 +11,7 @@ import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 
 export default function DashboardPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['my-restaurant'],
-    queryFn: () => api.get('/api/dashboard/restaurant'),
-  });
-
-  const restaurant = data?.data;
+  const { data: restaurant, isLoading } = useMyRestaurant();
 
   if (isLoading) {
     return (

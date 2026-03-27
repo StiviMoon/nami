@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import { Input, Textarea } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
@@ -119,14 +121,11 @@ export default function PerfilPage() {
     longitude: null as number | null,
   });
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['my-restaurant'],
-    queryFn: () => api.get('/api/dashboard/restaurant'),
-  });
+  const { data, isLoading } = useMyRestaurant();
 
   useEffect(() => {
-    if (data?.data) {
-      const r = data.data;
+    if (data) {
+      const r = data;
       setForm({
         name: r.name || '',
         description: r.description || '',
@@ -156,7 +155,7 @@ export default function PerfilPage() {
   const update = useMutation({
     mutationFn: (body: Record<string, unknown>) => api.put('/api/dashboard/restaurant', body),
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['my-restaurant'] });
+      qc.invalidateQueries({ queryKey: queryKeys.dashboard.restaurant });
       toast('Cambios guardados', 'success');
     },
     onError: () => toast('Error al guardar', 'error'),

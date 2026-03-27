@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import Link from 'next/link';
 import { Search, MapPin as MapPinIcon, Heart, Clock } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
@@ -22,14 +23,15 @@ export default function FeedPage() {
   const { favorites } = useFavorites();
 
   const { data: categoriesData } = useQuery({
-    queryKey: ['categories'],
+    queryKey: queryKeys.restaurants.categories,
     queryFn: () => api.get('/api/restaurants/categories'),
+    staleTime: 1000 * 60 * 15, // categorías cambian poco — 15 min
   });
 
   const geoParams = geo.latitude && geo.longitude ? `&lat=${geo.latitude}&lng=${geo.longitude}` : '';
 
   const { data, isLoading } = useQuery({
-    queryKey: ['restaurants', category, debouncedSearch, geo.latitude, geo.longitude],
+    queryKey: queryKeys.restaurants.list({ category, search: debouncedSearch, lat: geo.latitude ?? undefined, lng: geo.longitude ?? undefined }),
     queryFn: () =>
       api.get(`/api/restaurants?category=${category === 'all' ? '' : category}&search=${debouncedSearch}&limit=50${geoParams}`),
   });

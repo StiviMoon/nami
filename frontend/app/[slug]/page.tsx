@@ -2,6 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
+import { queryKeys } from '@/lib/queryKeys';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/utils';
 import Link from 'next/link';
@@ -27,20 +28,16 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const categoryRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  const { data: restData, isLoading: restLoading } = useQuery({
-    queryKey: ['restaurant', slug],
-    queryFn: () => api.get(`/api/restaurants/${slug}`),
+  // Una sola request: restaurant + menu combinados
+  const { data, isLoading } = useQuery({
+    queryKey: queryKeys.restaurants.bySlug(slug),
+    queryFn: () => api.get(`/api/restaurants/${slug}?includeMenu=true`),
+    select: (res) => res.data as { restaurant: any; menu: any[] },
   });
 
-  const restaurant = restData?.data;
+  const restaurant = data?.restaurant;
+  const categories = data?.menu ?? [];
 
-  const { data: menuData, isLoading: menuLoading } = useQuery({
-    queryKey: ['menu', restaurant?.id],
-    queryFn: () => api.get(`/api/menu/${restaurant?.id}`),
-    enabled: !!restaurant?.id,
-  });
-
-  const categories = menuData?.data || [];
   const theme = getThemeClasses(restaurant?.themePreset);
   const cardStyleClass = getMenuCardStyleClasses(restaurant?.menuStyle);
 
@@ -49,7 +46,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
     categoryRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, []);
 
-  if (restLoading) {
+  if (isLoading) {
     return (
       <main className="min-h-screen bg-n-50">
         <Skeleton className="h-56 w-full rounded-none" />
@@ -93,18 +90,16 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
   return (
     <PageTransition>
       <main className="min-h-screen bg-n-50" style={getCustomThemeStyle(restaurant)}>
-        {/* Cover as color banner */}
+        {/* Cover banner */}
         <div
-          className={`h-56 md:h-64 bg-linear-to-br ${theme.header} relative overflow-hidden`}
+          className={`h-56 md:h-64 bg-gradient-to-br ${theme.header} relative overflow-hidden`}
           style={hasCustomColors(restaurant)
-            ? {
-                backgroundImage: `linear-gradient(135deg, ${restaurant.secondaryColor || restaurant.primaryColor}, ${restaurant.primaryColor})`,
-              }
+            ? { backgroundImage: `linear-gradient(135deg, ${restaurant.secondaryColor || restaurant.primaryColor}, ${restaurant.primaryColor})` }
             : undefined}
         >
-          <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-black/10" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10" />
           {restaurant.logoUrl && (
-            <div className="absolute inset-0 z-2 flex items-center justify-center pointer-events-none">
+            <div className="absolute inset-0 z-[2] flex items-center justify-center pointer-events-none">
               <img
                 src={restaurant.logoUrl}
                 alt={`Logo de ${restaurant.name}`}
@@ -113,7 +108,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
             </div>
           )}
           {restaurant.bannerText && (
-            <div className="absolute inset-x-0 bottom-4 flex items-center justify-center z-3 px-4">
+            <div className="absolute inset-x-0 bottom-4 flex items-center justify-center z-[3] px-4">
               <p className="text-white text-2xl md:text-3xl font-display font-bold text-center drop-shadow-lg px-4">
                 {restaurant.bannerText}
               </p>
@@ -121,7 +116,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
           )}
           <Link
             href="/feed"
-            className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2.5 hover:bg-white transition-colors shadow-sm z-10"
+            className="cursor-pointer absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-full p-2.5 hover:bg-white transition-colors shadow-sm z-10"
           >
             <ArrowLeft className="w-5 h-5" />
           </Link>
@@ -140,7 +135,6 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
           <SlideIn direction="up">
             <div className="bg-white rounded-2xl p-6 shadow-lg border border-n-100">
               <div className="flex items-start gap-4">
-                {/* Logo */}
                 {restaurant.logoUrl && (
                   <img
                     src={restaurant.logoUrl}
@@ -154,9 +148,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
                       {restaurant.name}
                     </h1>
                     <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-                      {restaurant.plan === 'PRO' && (
-                        <Badge variant="pro" icon size="xs">Pro</Badge>
-                      )}
+                      {restaurant.plan === 'PRO' && <Badge variant="pro" icon size="xs">Pro</Badge>}
                       {restaurant.isClosed ? (
                         <Badge variant="danger" size="xs">
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -177,22 +169,20 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
                   {restaurant.description && (
                     <p className="text-n-500 mt-3 text-sm leading-relaxed">{restaurant.description}</p>
                   )}
-
-                  {/* Social links */}
                   {(restaurant.instagram || restaurant.tiktok || restaurant.facebook) && (
                     <div className="flex items-center gap-3 mt-3">
                       {restaurant.instagram && (
-                        <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" className="text-n-400 hover:text-pink-500 transition-colors">
+                        <a href={`https://instagram.com/${restaurant.instagram}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-n-400 hover:text-pink-500 transition-colors">
                           <Instagram className="w-4 h-4" />
                         </a>
                       )}
                       {restaurant.tiktok && (
-                        <a href={`https://tiktok.com/@${restaurant.tiktok}`} target="_blank" rel="noopener noreferrer" className="text-n-400 hover:text-n-900 transition-colors">
+                        <a href={`https://tiktok.com/@${restaurant.tiktok}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-n-400 hover:text-n-900 transition-colors">
                           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.11v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.35 6.34 6.34 0 006.34-6.34V8.93a8.22 8.22 0 003.76.92V6.4s-.01.29 0 .29z"/></svg>
                         </a>
                       )}
                       {restaurant.facebook && (
-                        <a href={`https://facebook.com/${restaurant.facebook}`} target="_blank" rel="noopener noreferrer" className="text-n-400 hover:text-blue-600 transition-colors">
+                        <a href={`https://facebook.com/${restaurant.facebook}`} target="_blank" rel="noopener noreferrer" className="cursor-pointer text-n-400 hover:text-blue-600 transition-colors">
                           <Facebook className="w-4 h-4" />
                         </a>
                       )}
@@ -201,7 +191,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
                 </div>
               </div>
 
-              {/* Schedule */}
+              {/* Horarios */}
               {restaurant.schedule && (() => {
                 try {
                   const schedule = JSON.parse(restaurant.schedule);
@@ -241,15 +231,9 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
           />
         </div>
 
-        {/* Menu */}
+        {/* Menú */}
         <div className="max-w-4xl mx-auto px-4 py-6">
-          {menuLoading ? (
-            <div className="space-y-4">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <Skeleton key={i} className="h-24 w-full" />
-              ))}
-            </div>
-          ) : categories.length === 0 ? (
+          {categories.length === 0 ? (
             <EmptyState
               emoji="📂"
               title="Sin menú disponible"
@@ -274,31 +258,24 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
 
                       return (
                         <StaggerItem key={item.id}>
-                          <div
-                            className={`${cardStyleClass} ${
-                              isGrid ? 'flex flex-col min-h-[252px] p-3 sm:p-4' : 'flex gap-4'
-                            } transition-all`}
-                          >
+                          <div className={`${cardStyleClass} ${isGrid ? 'flex flex-col min-h-[252px] p-3 sm:p-4' : 'flex gap-4'} transition-all`}>
                             {item.imageUrl && (
                               <img
                                 src={item.imageUrl}
                                 alt={item.name}
+                                loading="lazy"
                                 className={isGrid ? 'w-full h-28 sm:h-32 rounded-xl object-cover' : 'w-20 h-20 md:w-24 md:h-24 rounded-xl object-cover shrink-0'}
                               />
                             )}
                             <div className={`flex-1 min-w-0 ${isGrid ? 'mt-3 flex flex-col' : ''}`}>
                               {itemBadge && (
-                                <span
-                                  className={`mb-1.5 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold leading-none ${itemBadge.color}`}
-                                >
+                                <span className={`mb-1.5 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold leading-none ${itemBadge.color}`}>
                                   {itemBadge.emoji} {itemBadge.label}
                                 </span>
                               )}
-                              <div className={`flex ${isGrid ? 'items-start justify-between' : 'items-center'} gap-2`}>
-                                <h4 className={`font-semibold text-n-800 ${isGrid ? 'text-sm sm:text-base leading-tight line-clamp-2 pr-1' : ''}`}>
-                                  {item.name}
-                                </h4>
-                              </div>
+                              <h4 className={`font-semibold text-n-800 ${isGrid ? 'text-sm sm:text-base leading-tight line-clamp-2 pr-1' : ''}`}>
+                                {item.name}
+                              </h4>
                               {item.description && (
                                 <p className={`text-sm text-n-400 mt-1 ${isGrid ? 'line-clamp-2 min-h-10' : 'line-clamp-2'}`}>
                                   {item.description}
@@ -313,14 +290,14 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
                                 <div className="flex items-center gap-2">
                                   <button
                                     onClick={() => cart.decrease(item.id)}
-                                    className="w-8 h-8 rounded-full bg-n-100 flex items-center justify-center hover:bg-n-200 transition-colors"
+                                    className="cursor-pointer w-8 h-8 rounded-full bg-n-100 flex items-center justify-center hover:bg-n-200 transition-colors"
                                   >
                                     <Minus className="w-4 h-4" />
                                   </button>
                                   <span className="font-bold w-6 text-center text-sm">{inCart.quantity}</span>
                                   <button
                                     onClick={() => cart.increase(item.id)}
-                                    className={`w-8 h-8 rounded-full ${hasCustomColors(restaurant) ? 'bg-r-primary' : theme.accentBg} text-white flex items-center justify-center ${theme.accentHover} transition-colors`}
+                                    className={`cursor-pointer w-8 h-8 rounded-full ${hasCustomColors(restaurant) ? 'bg-r-primary' : theme.accentBg} text-white flex items-center justify-center ${theme.accentHover} transition-colors`}
                                   >
                                     <Plus className="w-4 h-4" />
                                   </button>
@@ -329,7 +306,7 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
                                 <motion.button
                                   whileTap={{ scale: 0.85 }}
                                   onClick={() => addToCart(item)}
-                                  className={`w-10 h-10 rounded-full ${hasCustomColors(restaurant) ? 'bg-r-primary' : theme.accentBg} text-white flex items-center justify-center ${theme.accentHover} transition-colors shadow-sm`}
+                                  className={`cursor-pointer w-10 h-10 rounded-full ${hasCustomColors(restaurant) ? 'bg-r-primary' : theme.accentBg} text-white flex items-center justify-center ${theme.accentHover} transition-colors shadow-sm`}
                                 >
                                   <Plus className="w-5 h-5" />
                                 </motion.button>
@@ -346,7 +323,6 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
           )}
         </div>
 
-        {/* Floating cart button */}
         <CartFloatingButton
           visible={totalItems > 0 && !cartOpen}
           totalItems={totalItems}
@@ -356,7 +332,6 @@ export default function RestaurantPage({ params }: { params: Promise<{ slug: str
           accentHover={theme.accentHover}
         />
 
-        {/* Cart drawer */}
         <CartDrawer
           open={cartOpen}
           onClose={() => setCartOpen(false)}
