@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #FF7A00;
+  --color-primary-dark: #EA580C;
+  --color-accent: #B088C9;
+  --color-detail: #D2E600;
+  --color-n-0: #FFFFFF;
+  --color-n-50: #F8FAFC;
+  --color-n-100: #F1F5F9;
+  --color-n-200: #E2E8F0;
+  --color-n-300: #CBD5E1;
+  --color-n-400: #94A3B8;
+  --color-n-500: #64748B;
+  --color-n-600: #475569;
+  --color-n-700: #334155;
+  --color-n-800: #1E293B;
+  --color-n-900: #0F172A;
+  --color-n-950: #020617;
+  --font-display: 'Sora', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-n-900);
+  background: var(--color-n-0);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Custom restaurant theme colors (set via inline style) */
+.text-r-primary { color: var(--r-primary, var(--color-primary)); }
+.bg-r-primary { background-color: var(--r-primary, var(--color-primary)); }
+.border-r-primary { border-color: var(--r-primary, var(--color-primary)); }
+.text-r-secondary { color: var(--r-secondary, var(--color-accent)); }
+.bg-r-secondary { background-color: var(--r-secondary, var(--color-accent)); }
