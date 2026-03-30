@@ -5,10 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import Link from 'next/link';
-import { Search, MapPin as MapPinIcon, Heart, Clock } from 'lucide-react';
+import { Search, MapPin as MapPinIcon, Heart, Bell, Clock } from 'lucide-react';
 import { useDebounce } from '@/hooks/useDebounce';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { useFavorites } from '@/hooks/useFavorites';
+import { useCart } from '@/hooks/useCart';
 import { RestaurantCard } from '@/components/web/RestaurantCard';
 import { FeedSkeleton } from '@/components/web/FeedSkeleton';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -21,75 +22,90 @@ export default function FeedPage() {
   const debouncedSearch = useDebounce(search, 300);
   const geo = useGeolocation();
   const { favorites } = useFavorites();
+  const cart = useCart();
 
   const { data: categoriesData } = useQuery({
     queryKey: queryKeys.restaurants.categories,
     queryFn: () => api.get('/api/restaurants/categories'),
-    staleTime: 1000 * 60 * 15, // categorías cambian poco — 15 min
+    staleTime: 1000 * 60 * 15,
   });
 
   const geoParams = geo.latitude && geo.longitude ? `&lat=${geo.latitude}&lng=${geo.longitude}` : '';
 
   const { data, isLoading } = useQuery({
-    queryKey: queryKeys.restaurants.list({ category, search: debouncedSearch, lat: geo.latitude ?? undefined, lng: geo.longitude ?? undefined }),
+    queryKey: queryKeys.restaurants.list({
+      category,
+      search: debouncedSearch,
+      lat: geo.latitude ?? undefined,
+      lng: geo.longitude ?? undefined,
+    }),
     queryFn: () =>
       api.get(`/api/restaurants?category=${category === 'all' ? '' : category}&search=${debouncedSearch}&limit=50${geoParams}`),
   });
 
   const allRestaurants = data?.data?.restaurants || [];
   const restaurants = showFavorites
-    ? allRestaurants.filter((r: any) => favorites.includes(r.id))
+    ? allRestaurants.filter((r: { id: string }) => favorites.includes(r.id))
     : allRestaurants;
   const categories: string[] = categoriesData?.data || [];
+  const cartActive = cart.items.length > 0;
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-n-50">
-        {/* Header */}
-        <header className="bg-white/95 backdrop-blur-xl border-b border-n-100 sticky top-0 z-40 shadow-sm shadow-n-900/5">
-          <div className="max-w-6xl mx-auto px-4 py-3">
-            <div className="flex items-center gap-3 mb-3">
-              <Link href="/" className="text-xl font-display font-bold text-primary shrink-0 cursor-pointer">
-                ÑAMI
+      <main className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40 py-5 px-6 shadow-sm">
+          <div className="max-w-7xl mx-auto flex flex-col gap-5">
+            <div className="flex justify-between items-center gap-3">
+              <Link href="/" className="text-2xl font-black italic tracking-tighter text-gray-900 shrink-0">
+                ÑAMI <span className="text-[#E85D04]">!</span>
               </Link>
-              <div className="flex-1 relative">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-n-400" />
-                <input
-                  type="text"
-                  placeholder="Buscar restaurantes..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-n-50 rounded-xl border border-n-200 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all placeholder:text-n-400"
-                />
+              <div className="flex items-center gap-3 flex-1 justify-end min-w-0">
+                {cartActive && (
+                  <div className="flex items-center gap-2 bg-orange-50 px-3 py-1.5 rounded-full border border-orange-100 animate-pulse shrink-0">
+                    <Bell size={14} className="text-[#E85D04]" />
+                    <span className="text-[9px] font-black uppercase text-[#E85D04] whitespace-nowrap">
+                      Carrito activo
+                    </span>
+                  </div>
+                )}
+                <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100 shrink-0 hidden sm:inline">
+                  Yumbo
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setShowFavorites(!showFavorites)}
+                  title="Favoritos"
+                  className={`cursor-pointer p-2.5 rounded-full shrink-0 transition-all ${
+                    showFavorites
+                      ? 'bg-red-50 text-red-500 scale-110'
+                      : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+                  }`}
+                >
+                  <Heart className={`w-5 h-5 ${showFavorites ? 'fill-red-500' : ''}`} />
+                </button>
+                <Link
+                  href="/historial"
+                  title="Mis pedidos"
+                  className="cursor-pointer p-2.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0 transition-all"
+                >
+                  <Clock className="w-5 h-5" />
+                </Link>
               </div>
-              <button
-                onClick={() => setShowFavorites(!showFavorites)}
-                title="Favoritos"
-                className={`cursor-pointer p-2.5 rounded-xl shrink-0 transition-all ${
-                  showFavorites
-                    ? 'bg-red-50 text-red-500 scale-110'
-                    : 'text-n-400 hover:bg-n-100 hover:text-n-600'
-                }`}
-              >
-                <Heart className={`w-5 h-5 ${showFavorites ? 'fill-red-500' : ''}`} />
-              </button>
-              <Link
-                href="/historial"
-                title="Historial"
-                className="cursor-pointer p-2.5 rounded-xl text-n-400 hover:bg-n-100 hover:text-n-600 shrink-0 transition-all"
-              >
-                <Clock className="w-5 h-5" />
-              </Link>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:hidden">
+              <span className="text-[10px] font-black uppercase text-gray-400 tracking-widest bg-gray-50 px-3 py-1 rounded-full border border-gray-100">
+                Yumbo
+              </span>
             </div>
 
-            {/* Category filters */}
             <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
               <button
+                type="button"
                 onClick={() => setCategory('all')}
-                className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                className={`cursor-pointer px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all shrink-0 ${
                   category === 'all'
-                    ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                    : 'bg-n-100 text-n-500 hover:bg-n-200'
+                    ? 'bg-[#E85D04] text-white shadow-lg shadow-orange-500/25'
+                    : 'bg-white text-gray-400 border border-gray-100'
                 }`}
               >
                 Todos
@@ -97,11 +113,12 @@ export default function FeedPage() {
               {categories.map((cat) => (
                 <button
                   key={cat}
+                  type="button"
                   onClick={() => setCategory(cat)}
-                  className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all ${
+                  className={`cursor-pointer px-4 py-2 rounded-full text-xs font-black whitespace-nowrap transition-all shrink-0 ${
                     category === cat
-                      ? 'bg-primary text-white shadow-sm shadow-primary/20'
-                      : 'bg-n-100 text-n-500 hover:bg-n-200'
+                      ? 'bg-[#E85D04] text-white shadow-lg shadow-orange-500/25'
+                      : 'bg-white text-gray-400 border border-gray-100'
                   }`}
                 >
                   {cat}
@@ -111,12 +128,12 @@ export default function FeedPage() {
           </div>
         </header>
 
-        {/* Location banner */}
         {!geo.requested && (
-          <div className="max-w-6xl mx-auto px-4 pt-5">
+          <div className="max-w-7xl mx-auto px-6 pt-5">
             <button
+              type="button"
               onClick={geo.requestPermission}
-              className="cursor-pointer w-full flex items-center justify-center gap-2 bg-white border border-n-200 rounded-xl px-4 py-3 text-sm font-medium text-n-600 hover:border-primary hover:text-primary hover:bg-primary/5 transition-all"
+              className="cursor-pointer w-full flex items-center justify-center gap-2 bg-white border-2 border-dashed border-gray-200 rounded-3xl px-4 py-3 text-sm font-bold text-gray-500 hover:border-[#E85D04] hover:text-[#E85D04] hover:bg-orange-50/50 transition-all"
             >
               <MapPinIcon className="w-4 h-4" />
               Activar ubicación para ver restaurantes cercanos
@@ -124,21 +141,39 @@ export default function FeedPage() {
           </div>
         )}
 
-        {/* Grid */}
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          {/* Results header */}
-          {!isLoading && restaurants.length > 0 && (
-            <div className="flex items-center justify-between mb-5">
-              <p className="text-sm text-n-500 font-medium">
-                {showFavorites ? 'Tus favoritos' : `${restaurants.length} restaurante${restaurants.length !== 1 ? 's' : ''}`}
-              </p>
-              {geo.latitude && (
-                <span className="text-xs text-emerald-600 bg-emerald-50 px-3 py-1 rounded-full font-medium flex items-center gap-1.5">
+        <div className="max-w-7xl mx-auto p-6 space-y-10">
+          <div className="space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+              <h2 className="text-4xl font-black leading-none text-gray-900">
+                Tu ciudad, <br />
+                <span className="text-[#E85D04]">en un plato.</span>
+              </h2>
+              {geo.latitude != null && (
+                <span className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-full font-black flex items-center gap-1.5 shrink-0 border border-emerald-100 w-fit">
                   <MapPinIcon className="w-3 h-3" />
-                  Ubicación activa
+                  Cerca de ti
                 </span>
               )}
             </div>
+            <div className="relative max-w-xl group">
+              <Search
+                size={20}
+                className="absolute left-5 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#E85D04] transition-colors"
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Busca tu restaurante..."
+                className="w-full bg-white border-2 border-gray-100 rounded-[1.5rem] py-4 pl-14 pr-6 text-sm font-bold shadow-sm focus:border-orange-100 outline-none transition-all placeholder:text-gray-400"
+              />
+            </div>
+          </div>
+
+          {!isLoading && restaurants.length > 0 && (search || showFavorites || category !== 'all') && (
+            <p className="text-sm text-gray-500 font-bold">
+              {showFavorites ? 'Tus favoritos' : `${restaurants.length} resultado${restaurants.length !== 1 ? 's' : ''}`}
+            </p>
           )}
 
           {isLoading ? (
@@ -154,8 +189,8 @@ export default function FeedPage() {
               }
             />
           ) : (
-            <StaggerContainer className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {restaurants.map((r: any) => (
+            <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {restaurants.map((r: (typeof restaurants)[number]) => (
                 <RestaurantCard key={r.id} restaurant={r} />
               ))}
             </StaggerContainer>

@@ -26,7 +26,8 @@ interface CartStore {
     paymentMethod: string,
     deliveryMode: string,
     deliveryAddress?: string,
-    deliveryPhone?: string
+    deliveryPhone?: string,
+    customerName?: string
   ) => string;
 }
 
@@ -81,7 +82,7 @@ export const useCart = create<CartStore>((set, get) => ({
 
   total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
-  buildWhatsAppUrl: (paymentMethod, deliveryMode, deliveryAddress, deliveryPhone) => {
+  buildWhatsAppUrl: (paymentMethod, deliveryMode, deliveryAddress, deliveryPhone, customerName) => {
     const s = get();
     const itemsList = s.items
       .map((i) => `- ${i.quantity} x ${sanitizeLine(i.name)}: $${(i.price * i.quantity).toLocaleString('es-CO')}`)
@@ -94,6 +95,7 @@ export const useCart = create<CartStore>((set, get) => ({
       'HOLA, QUIERO REALIZAR ESTE PEDIDO:',
       '',
       `RESTAURANTE: ${sanitizeLine(s.restaurantName || '')}`,
+      ...(customerName ? ['', `CLIENTE: ${sanitizeLine(customerName)}`] : []),
       '',
       'DETALLE DEL PEDIDO:',
       itemsList,

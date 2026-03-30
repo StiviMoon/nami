@@ -7,15 +7,16 @@ import { useRouter } from 'next/navigation';
 import { formatPrice } from '@/lib/utils';
 import { PageTransition, StaggerContainer, StaggerItem } from '@/components/motion';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Button } from '@/components/ui/button';
 import { Clock, RotateCcw, ArrowLeft, Trash2 } from 'lucide-react';
+
+const ACCENT = '#E85D04';
 
 export default function HistorialPage() {
   const { orders, clear } = useOrderHistory();
   const cart = useCart();
   const router = useRouter();
 
-  const repeatOrder = (order: typeof orders[0]) => {
+  const repeatOrder = (order: (typeof orders)[0]) => {
     cart.clear();
     for (const item of order.items) {
       for (let i = 0; i < item.quantity; i++) {
@@ -31,75 +32,96 @@ export default function HistorialPage() {
 
   return (
     <PageTransition>
-      <main className="min-h-screen bg-n-50">
-        <header className="bg-white border-b border-n-100 sticky top-0 z-40">
-          <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between">
+      <main className="min-h-screen bg-gray-50 font-sans text-gray-900 antialiased">
+        <header className="bg-white/80 backdrop-blur-xl border-b border-gray-100 sticky top-0 z-40">
+          <div className="max-w-2xl mx-auto px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Link href="/feed" className="p-2 rounded-xl text-n-400 hover:bg-n-50 transition-colors">
+              <Link
+                href="/feed"
+                className="p-2 rounded-2xl text-gray-400 hover:bg-gray-100 transition-colors"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
-              <h1 className="text-xl font-display font-bold">Mis pedidos</h1>
+              <h1 className="text-xl font-black tracking-tight">Mis pedidos</h1>
             </div>
             {orders.length > 0 && (
-              <Button variant="ghost" size="sm" onClick={clear} icon={<Trash2 className="w-3.5 h-3.5" />}>
+              <button
+                type="button"
+                onClick={clear}
+                className="cursor-pointer text-[10px] font-black uppercase text-gray-400 hover:text-red-500 flex items-center gap-1.5 px-3 py-2 rounded-xl border border-transparent hover:border-gray-200 transition-colors"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
                 Limpiar
-              </Button>
+              </button>
             )}
           </div>
         </header>
 
-        <div className="max-w-2xl mx-auto px-4 py-6">
+        <div className="max-w-2xl mx-auto px-6 py-8">
           {orders.length === 0 ? (
             <EmptyState
               icon={Clock}
               title="Sin pedidos aún"
               description="Cuando hagas tu primer pedido, aparecerá aquí."
               action={
-                <Link href="/feed">
-                  <Button>Explorar restaurantes</Button>
+                <Link
+                  href="/feed"
+                  className="inline-flex items-center justify-center py-4 px-8 bg-gray-900 text-white font-black rounded-2xl uppercase text-xs tracking-widest hover:bg-black transition-colors"
+                >
+                  Explorar restaurantes
                 </Link>
               }
             />
           ) : (
-            <StaggerContainer className="space-y-4">
+            <StaggerContainer className="space-y-5">
               {orders.map((order) => (
                 <StaggerItem key={order.id}>
-                  <div className="bg-white rounded-2xl border border-n-100 p-5">
-                    <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="bg-white rounded-[2.5rem] border border-gray-100 p-8 shadow-sm">
+                    <div className="flex items-start justify-between gap-3 mb-4">
                       <div>
-                        <Link href={`/${order.restaurantSlug}`} className="font-display font-semibold text-primary hover:underline">
+                        <Link
+                          href={`/${order.restaurantSlug}`}
+                          className="font-black text-lg hover:opacity-80 transition-opacity"
+                          style={{ color: ACCENT }}
+                        >
                           {order.restaurantName}
                         </Link>
-                        <p className="text-xs text-n-400 mt-0.5">
+                        <p className="text-xs text-gray-400 font-bold mt-1">
                           {new Date(order.date).toLocaleDateString('es-CO', {
-                            day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
+                            day: 'numeric',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
                           })}
                         </p>
                       </div>
-                      <span className="font-display font-bold text-lg text-n-800">
-                        {formatPrice(order.total)}
-                      </span>
+                      <span className="font-black text-xl text-gray-900">{formatPrice(order.total)}</span>
                     </div>
-                    <div className="text-sm text-n-500 space-y-1 mb-3">
+                    <div className="text-sm text-gray-500 space-y-1 mb-4">
                       {order.items.map((item) => (
-                        <p key={item.id}>{item.quantity}x {item.name}</p>
+                        <p key={item.id} className="font-medium">
+                          {item.quantity}× {item.name}
+                        </p>
                       ))}
                     </div>
-                    <div className="flex items-center justify-between pt-3 border-t border-n-100">
-                      <div className="flex gap-2 text-xs text-n-400">
-                        <span className="bg-n-50 px-2 py-1 rounded-lg">{order.paymentMethod}</span>
-                        <span className="bg-n-50 px-2 py-1 rounded-lg">
+                    <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                      <div className="flex gap-2 text-[10px] font-black uppercase tracking-wide text-gray-400">
+                        <span className="bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
+                          {order.paymentMethod}
+                        </span>
+                        <span className="bg-gray-50 px-3 py-1.5 rounded-full border border-gray-100">
                           {order.deliveryMode === 'delivery' ? 'Domicilio' : 'Recoger'}
                         </span>
                       </div>
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <button
+                        type="button"
                         onClick={() => repeatOrder(order)}
-                        icon={<RotateCcw className="w-3.5 h-3.5" />}
+                        className="cursor-pointer flex items-center gap-2 text-[10px] font-black uppercase px-4 py-2.5 rounded-2xl border-2 border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white transition-colors"
                       >
+                        <RotateCcw className="w-3.5 h-3.5" />
                         Repetir
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </StaggerItem>

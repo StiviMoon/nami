@@ -1,12 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { MapPin, Clock } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { fadeInUp } from '@/components/motion/variants';
-import { getThemeClasses } from '@/lib/restaurant-theme';
-import { Badge } from '@/components/ui/badge';
+import { motion } from 'framer-motion';
 import { FavoriteButton } from './FavoriteButton';
+import { Badge } from '@/components/ui/badge';
+import { useCart } from '@/hooks/useCart';
 
 interface Restaurant {
   id: string;
@@ -23,83 +22,68 @@ interface Restaurant {
   distance?: number | null;
 }
 
-interface RestaurantCardProps {
-  restaurant: Restaurant;
-}
-
-export function RestaurantCard({ restaurant: r }: RestaurantCardProps) {
-  const theme = getThemeClasses(r.themePreset);
+export function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
+  const cart = useCart();
+  const hasPendingOrder = cart.restaurantId === r.id && cart.items.length > 0;
+  const open = !r.isClosed;
 
   return (
-    <motion.div variants={fadeInUp} whileHover={{ y: -3 }} transition={{ duration: 0.2 }}>
+    <motion.div variants={fadeInUp} whileHover={{ y: -4 }} transition={{ duration: 0.22 }}>
       <Link
         href={`/${r.slug}`}
-        className="cursor-pointer group block bg-white rounded-2xl overflow-hidden border border-n-100 hover:border-n-200 hover:shadow-lg hover:shadow-n-900/5 transition-all duration-300"
+        className={`cursor-pointer group block bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all ${
+          !open ? 'grayscale opacity-70' : ''
+        }`}
       >
-        {/* Cover */}
-        <div className={`h-44 bg-gradient-to-br ${theme.header} relative overflow-hidden`}>
+        <div className="h-60 relative overflow-hidden">
           {r.coverUrl || r.logoUrl ? (
             <img
               src={r.coverUrl || r.logoUrl}
               alt={r.name}
               loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
             />
           ) : (
-            <div className={`w-full h-full flex items-center justify-center bg-gradient-to-br ${theme.header}`}>
-              <span className="text-5xl opacity-40 select-none">🍽</span>
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+              <span className="text-6xl opacity-25 select-none">🍽</span>
             </div>
           )}
-
-          {/* Gradient overlay */}
-          <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/40 to-transparent" />
-
-          {/* Top-right actions */}
-          <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10">
+          <div className="absolute top-4 left-4 z-10 flex items-center gap-2" onClick={(e) => e.preventDefault()}>
             <FavoriteButton restaurantId={r.id} />
             {r.plan === 'PRO' && <Badge variant="pro" icon size="xs">Pro</Badge>}
           </div>
-
-          {/* Status badge */}
-          {r.isClosed ? (
-            <div className="absolute top-3 left-3 z-10">
-              <span className="flex items-center gap-1.5 bg-black/60 backdrop-blur-sm text-white text-[10px] font-semibold px-2.5 py-1 rounded-full">
-                <Clock className="w-3 h-3" />
-                Cerrado
-              </span>
-            </div>
-          ) : null}
-
-          {/* Logo avatar */}
-          {r.logoUrl && (
-            <div className="absolute left-4 bottom-3 z-20">
-              <img
-                src={r.logoUrl}
-                alt={`Logo de ${r.name}`}
-                className="w-11 h-11 rounded-xl object-cover border-2 border-white/95 shadow-lg bg-white"
-              />
+          <div className="absolute top-4 right-4 bg-white/80 backdrop-blur-md px-3 py-1 rounded-full flex items-center gap-1.5">
+            <div className={`w-1.5 h-1.5 rounded-full ${open ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
+            <span className="text-[8px] font-black uppercase tracking-widest text-gray-800">
+              {open ? 'Abierto' : 'Cerrado'}
+            </span>
+          </div>
+          {hasPendingOrder && (
+            <div className="absolute bottom-4 left-4 bg-[#E85D04] text-white px-2 py-1 rounded-lg text-[8px] font-black uppercase shadow-lg border border-white/20">
+              Pedido pendiente
             </div>
           )}
         </div>
-
-        {/* Info */}
-        <div className="p-4">
-          <div className="flex items-start justify-between gap-2 mb-1">
-            <h3 className={`font-display font-bold text-base leading-tight ${r.isClosed ? 'text-n-400' : theme.accent}`}>
+        <div className="p-8">
+          <span className="px-2 py-0.5 bg-orange-50 text-[#E85D04] text-[9px] font-black uppercase rounded-full">
+            {r.category}
+          </span>
+          <div className="flex items-start justify-between gap-2 mt-2">
+            <h3 className="text-2xl font-black leading-none text-gray-900 group-hover:text-[#E85D04] transition-colors">
               {r.name}
             </h3>
             {r.distance != null && (
-              <span className="text-primary font-semibold text-[11px] bg-primary/10 px-2 py-0.5 rounded-full shrink-0 mt-0.5">
-                {r.distance < 1 ? `${Math.round(r.distance * 1000)}m` : `${r.distance.toFixed(1)} km`}
+              <span className="text-[#E85D04] font-black text-[11px] bg-orange-50 px-2 py-0.5 rounded-full shrink-0">
+                {r.distance < 1
+                  ? `${Math.round(r.distance * 1000)} m`
+                  : `${r.distance.toFixed(1)} km`}
               </span>
             )}
           </div>
-          <div className="flex items-center gap-1.5 text-n-400">
-            <MapPin className="w-3.5 h-3.5 shrink-0" />
-            <span className="text-xs truncate">{r.category}</span>
-          </div>
           {r.description && (
-            <p className="text-n-400 text-xs mt-2 line-clamp-2 leading-relaxed">{r.description}</p>
+            <p className="text-gray-400 text-xs mt-3 italic line-clamp-2 leading-relaxed">
+              &quot;{r.description}&quot;
+            </p>
           )}
         </div>
       </Link>

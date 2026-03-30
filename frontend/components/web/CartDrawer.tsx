@@ -56,7 +56,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
     <Drawer open={open} onClose={onClose} title="Tu pedido">
       <div className="p-4 sm:p-5 space-y-4 flex flex-col h-full">
         {/* Items */}
-        <div className="flex-1 space-y-3">
+        <div className="flex-1 space-y-1">
           <AnimatePresence mode="popLayout">
             {cart.items.map((item) => (
               <motion.div
@@ -65,12 +65,12 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20, height: 0 }}
-                className="flex justify-between items-center pb-3 border-b border-n-100"
+                className="flex justify-between items-center py-3 border-b border-n-100 last:border-0"
               >
                 <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-n-800 truncate">{item.name}</p>
-                  <p className="text-sm text-n-400">
-                    {formatPrice(item.price)} x {item.quantity}
+                  <p className="font-bold text-n-800 truncate">{item.name}</p>
+                  <p className="text-xs text-n-400 mt-0.5">
+                    {formatPrice(item.price)} × {item.quantity}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -99,7 +99,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
 
         {/* Payment method */}
         <div>
-          <label className="block text-sm font-semibold text-n-700 mb-2">Método de pago</label>
+          <label className="block text-xs font-bold text-n-500 uppercase tracking-widest mb-2">Método de pago</label>
           <select
             value={paymentMethod}
             onChange={(e) => setPaymentMethod(e.target.value)}
@@ -114,7 +114,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
 
         {/* Delivery mode */}
         <div>
-          <label className="block text-sm font-semibold text-n-700 mb-2">Modalidad</label>
+          <label className="block text-xs font-bold text-n-500 uppercase tracking-widest mb-2">Modalidad</label>
           <div className="grid grid-cols-2 gap-2">
             {[
               { value: 'delivery', label: '🛵 A domicilio' },
@@ -162,9 +162,9 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
         )}
 
         {/* Total */}
-        <div className="bg-n-50 rounded-xl p-4 flex justify-between items-center">
-          <span className="font-semibold text-lg">Total</span>
-          <span className={`font-display font-bold text-2xl ${themeAccent || 'text-primary'}`}>
+        <div className="bg-n-50 rounded-2xl p-4 flex justify-between items-center border border-n-100">
+          <span className="font-display font-bold text-base text-n-700 uppercase tracking-wide">Total</span>
+          <span className={`font-display font-black text-2xl ${themeAccent || 'text-primary'}`}>
             {formatPrice(cart.total())}
           </span>
         </div>
