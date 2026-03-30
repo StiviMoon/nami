@@ -60,7 +60,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
           <AnimatePresence mode="popLayout">
             {cart.items.map((item) => (
               <motion.div
-                key={item.id}
+                key={item.lineId}
                 layout
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -72,10 +72,20 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
                   <p className="text-xs text-n-400 mt-0.5">
                     {formatPrice(item.price)} × {item.quantity}
                   </p>
+                  {item.chosenExtras?.map((e) => (
+                    <p key={e.id} className="text-[10px] text-emerald-600 font-semibold">
+                      + {e.name}
+                    </p>
+                  ))}
+                  {item.chosenExclusions?.map((ex) => (
+                    <p key={ex} className="text-[10px] text-red-500 italic">
+                      Sin {ex}
+                    </p>
+                  ))}
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
                   <button
-                    onClick={() => cart.decrease(item.id)}
+                    onClick={() => cart.decrease(item.lineId)}
                     className="w-9 h-9 rounded-full bg-n-100 flex items-center justify-center hover:bg-n-200 transition-colors"
                   >
                     {item.quantity === 1 ? (
@@ -86,7 +96,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
                   </button>
                   <span className="font-bold w-6 text-center text-sm">{item.quantity}</span>
                   <button
-                    onClick={() => cart.increase(item.id)}
+                    onClick={() => cart.increase(item.lineId)}
                     className={`w-9 h-9 rounded-full ${themeAccentBg || 'bg-primary'} text-white flex items-center justify-center ${themeAccentHover || 'hover:bg-primary-dark'} transition-colors`}
                   >
                     <Plus className="w-4 h-4" />

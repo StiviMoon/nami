@@ -28,3 +28,4 @@ backend/prisma/*.db
 NAMI_Estrategia_v2.docx
 
 .claude
+frontend/tsconfig.tsbuildinfo

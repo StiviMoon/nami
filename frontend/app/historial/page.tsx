@@ -19,12 +19,22 @@ export default function HistorialPage() {
   const repeatOrder = (order: (typeof orders)[0]) => {
     cart.clear();
     for (const item of order.items) {
-      for (let i = 0; i < item.quantity; i++) {
-        cart.addItem(
-          { id: item.id, restaurantId: item.restaurantId, name: item.name, price: item.price },
-          order.restaurantName,
-          ''
-        );
+      const lineId = item.lineId ?? item.id;
+      cart.addItem(
+        {
+          lineId,
+          id: item.id,
+          restaurantId: item.restaurantId,
+          name: item.name,
+          price: item.price,
+          chosenExtras: item.chosenExtras,
+          chosenExclusions: item.chosenExclusions,
+        },
+        order.restaurantName,
+        ''
+      );
+      for (let q = 1; q < item.quantity; q++) {
+        cart.increase(lineId);
       }
     }
     router.push(`/${order.restaurantSlug}`);

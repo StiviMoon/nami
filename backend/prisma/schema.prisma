@@ -116,18 +116,20 @@ model MenuCategory {
 }
 
 model MenuItem {
-  id          String       @id @default(cuid())
-  name        String       @db.VarChar(255)
-  description String?      @db.Text
-  price       Decimal      @db.Decimal(10, 2)
-  imageUrl    String?      @db.VarChar(500)
-  badge       String?      @db.VarChar(20)
-  isAvailable Boolean      @default(true)
-  order       Int          @default(0)
-  category    MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
-  categoryId  String
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id             String       @id @default(cuid())
+  name           String       @db.VarChar(255)
+  description    String?      @db.Text
+  price          Decimal      @db.Decimal(10, 2)
+  imageUrl       String?      @db.VarChar(500)
+  badge          String?      @db.VarChar(20)
+  /** JSON: { extras?: { id, name, price }[], removables?: string[] } */
+  customization  Json?
+  isAvailable    Boolean      @default(true)
+  order          Int          @default(0)
+  category       MenuCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId     String
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
   @@index([categoryId])
   @@index([isAvailable])

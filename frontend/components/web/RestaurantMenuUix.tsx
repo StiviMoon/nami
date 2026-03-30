@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, Clock, MapPin, Settings2 } from 'lucide-react';
 import { Instagram, Facebook } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/utils';
@@ -14,6 +14,13 @@ import { FavoriteButton } from '@/components/web/FavoriteButton';
 import { ShareButton } from '@/components/web/ShareButton';
 import { Badge } from '@/components/ui/badge';
 import { getItemBadge } from '@/lib/restaurant-theme';
+import {
+  hasCustomization,
+  normalizeMenuCustomization,
+  buildCartLineId,
+  type MenuExtra,
+} from '@/lib/menu-customization';
+import { CustomizationModal } from '@/components/uix/CustomizationModal';
 
 const ACCENT = '#E85D04';
 
@@ -28,6 +35,7 @@ type MenuCategory = {
     imageUrl?: string | null;
     badge?: string | null;
     isAvailable: boolean;
+    customization?: unknown;
   }>;
 };
 
@@ -57,6 +65,14 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
   const [cartOpen, setCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState(categories[0]?.id || '');
   const [closedModalOpen, setClosedModalOpen] = useState(false);
+  const [customItem, setCustomItem] = useState<{
+    id: string;
+    name: string;
+    description?: string | null;
+    price: number;
+    extras?: MenuExtra[];
+    removables?: string[];
+  } | null>(null);
   const open = !restaurant.isClosed;
 
   useEffect(() => {
@@ -67,12 +83,39 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
     if (categories[0]?.id) setActiveCategory(categories[0].id);
   }, [categories]);
 
-  const addToCart = (item: { id: string; name: string; price: string | number }) => {
+  const addSimple = (item: { id: string; name: string; price: string | number }) => {
+    const lineId = buildCartLineId(item.id, [], []);
     cart.addItem(
-      { id: item.id, restaurantId: restaurant.id, name: item.name, price: Number(item.price) },
+      {
+        lineId,
+        id: item.id,
+        restaurantId: restaurant.id,
+        name: item.name,
+        price: Number(item.price),
+      },
       restaurant.name,
       restaurant.whatsapp || ''
     );
+  };
+
+  const handleAddClick = (item: MenuCategory['items'][number]) => {
+    if (!item.isAvailable) return;
+    const normalized = normalizeMenuCustomization(item.customization);
+    if (
+      normalized &&
+      ((normalized.extras?.length ?? 0) > 0 || (normalized.removables?.length ?? 0) > 0)
+    ) {
+      setCustomItem({
+        id: item.id,
+        name: item.name,
+        description: item.description,
+        price: Number(item.price),
+        extras: normalized.extras,
+        removables: normalized.removables,
+      });
+    } else {
+      addSimple(item);
+    }
   };
 
   const totalItems = cart.items.reduce((sum, i) => sum + i.quantity, 0);
@@ -247,6 +290,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         {activeItems.map((item) => {
           const photos = [item.imageUrl].filter(Boolean) as string[];
           const itemBadge = getItemBadge(item.badge);
+          const personalized = hasCustomization(item.customization);
           return (
             <article
               key={item.id}
@@ -261,7 +305,15 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
                 <div>
                   <div className="flex justify-between items-start mb-2 gap-2">
                     <h4 className="font-black text-lg text-gray-900">{item.name}</h4>
+                    {personalized && (
+                      <Settings2 size={16} className="text-gray-300 shrink-0 mt-0.5" aria-hidden />
+                    )}
                   </div>
+                  {personalized && (
+                    <span className="inline-block mb-2 text-[9px] font-black uppercase tracking-widest text-[#E85D04] bg-orange-50 px-2 py-0.5 rounded-full">
+                      Personalizable
+                    </span>
+                  )}
                   {itemBadge && (
                     <span
                       className={`mb-2 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold leading-none ${itemBadge.color}`}
@@ -280,12 +332,12 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
                   <button
                     type="button"
                     disabled={!item.isAvailable}
-                    onClick={() => addToCart(item)}
+                    onClick={() => handleAddClick(item)}
                     className={`px-5 py-2.5 text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-all cursor-pointer ${
                       !item.isAvailable ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 hover:bg-[#E85D04]'
                     }`}
                   >
-                    {!item.isAvailable ? 'Agotado' : 'Añadir'}
+                    {!item.isAvailable ? 'Agotado' : personalized ? 'Elegir opciones' : 'Añadir'}
                   </button>
                 </div>
               </div>
@@ -300,6 +352,29 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         onClose={() => setCartOpen(false)}
         restaurantName={restaurant.name}
         restaurantSlug={slug}
+      />
+      <CustomizationModal
+        item={customItem}
+        isOpen={!!customItem}
+        onClose={() => setCustomItem(null)}
+        onConfirm={(base, extras, removed) => {
+          const unitPrice = base.price + extras.reduce((s, e) => s + e.price, 0);
+          const lineId = buildCartLineId(base.id, extras, removed);
+          cart.addItem(
+            {
+              lineId,
+              id: base.id,
+              restaurantId: restaurant.id,
+              name: base.name,
+              price: unitPrice,
+              chosenExtras: extras.length ? extras : undefined,
+              chosenExclusions: removed.length ? removed : undefined,
+            },
+            restaurant.name,
+            restaurant.whatsapp || ''
+          );
+          setCustomItem(null);
+        }}
       />
     </div>
   );

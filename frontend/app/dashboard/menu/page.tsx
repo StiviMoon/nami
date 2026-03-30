@@ -6,7 +6,8 @@ import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp } from 'lucide-react';
+import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal } from 'lucide-react';
+import { normalizeMenuCustomization } from '@/lib/menu-customization';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { PageTransition, FadeIn } from '@/components/motion';
@@ -23,6 +24,28 @@ const BADGE_OPTIONS = [
 
 const EMPTY_ITEM = { name: '', description: '', price: '', imageUrl: '', badge: '' };
 
+type ExtraRow = { id: string; name: string; price: string };
+const emptyExtraRow = (): ExtraRow => ({ id: '', name: '', price: '' });
+
+function buildCustomizationFromForm(extras: ExtraRow[], removablesText: string) {
+  const extrasArr = extras
+    .filter((r) => r.name.trim())
+    .map((r, i) => ({
+      id: r.id.trim() || undefined,
+      name: r.name.trim(),
+      price: Number(String(r.price).replace(/\D/g, '')) || 0,
+    }));
+  const removables = removablesText
+    .split(/[\n,]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  if (extrasArr.length === 0 && removables.length === 0) return null;
+  return {
+    extras: extrasArr.length ? extrasArr : undefined,
+    removables: removables.length ? removables : undefined,
+  };
+}
+
 export default function MenuPage() {
   const qc = useQueryClient();
   const { data: restaurant, isLoading } = useMyRestaurant();
@@ -35,6 +58,11 @@ export default function MenuPage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
+  const [itemExtras, setItemExtras] = useState<ExtraRow[]>([]);
+  const [itemRemovables, setItemRemovables] = useState('');
+  const [editingCustomItemId, setEditingCustomItemId] = useState<string | null>(null);
+  const [editExtras, setEditExtras] = useState<ExtraRow[]>([]);
+  const [editRemovables, setEditRemovables] = useState('');
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -110,6 +138,33 @@ export default function MenuPage() {
     onSuccess: () => { invalidate(); toast('Item eliminado', 'success'); },
     onError: () => toast('Error al eliminar', 'error'),
   });
+
+  const updateItemCustom = useMutation({
+    mutationFn: ({
+      id,
+      customization,
+    }: {
+      id: string;
+      customization: Record<string, unknown> | null;
+    }) => api.put(`/api/dashboard/items/${id}`, { customization }),
+    onSuccess: () => {
+      invalidate();
+      setEditingCustomItemId(null);
+      toast('Personalización guardada', 'success');
+    },
+    onError: () => toast('Error al guardar personalización', 'error'),
+  });
+
+  const openCustomizationEditor = (item: { id: string; customization?: unknown }) => {
+    setEditingCustomItemId(item.id);
+    const n = normalizeMenuCustomization(item.customization);
+    setEditExtras(
+      n?.extras?.length
+        ? n.extras.map((e) => ({ id: e.id, name: e.name, price: String(e.price) }))
+        : []
+    );
+    setEditRemovables(n?.removables?.join('\n') ?? '');
+  };
 
   // ── Upload imagen ─────────────────────────────────────────────────────────
 
@@ -208,7 +263,14 @@ export default function MenuPage() {
                   <h3 className="font-display font-semibold text-lg">{cat.name}</h3>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => setAddingItem(addingItem === cat.id ? null : cat.id)}
+                      onClick={() => {
+                        const next = addingItem === cat.id ? null : cat.id;
+                        setAddingItem(next);
+                        if (next) {
+                          setItemExtras([]);
+                          setItemRemovables('');
+                        }
+                      }}
                       className="cursor-pointer text-primary hover:bg-primary/10 px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors"
                     >
                       <Plus className="w-4 h-4" /> Item
@@ -298,11 +360,74 @@ export default function MenuPage() {
                       </div>
                     </div>
 
+                    {/* Personalización (extras / quitables) */}
+                    <div className="mb-4 rounded-xl border border-n-200 p-4 bg-white">
+                      <label className="block text-sm font-semibold mb-1 flex items-center gap-2">
+                        <SlidersHorizontal className="w-4 h-4" />
+                        Personalización del plato (opcional)
+                      </label>
+                      <p className="text-xs text-n-500 mb-3">
+                        Toppings con precio y ingredientes que el cliente puede pedir sin. Se mostrará al elegir el plato en tu menú público.
+                      </p>
+                      <div className="space-y-2 mb-3">
+                        <p className="text-xs font-bold text-n-600">Extras / toppings</p>
+                        {itemExtras.map((row, idx) => (
+                          <div key={idx} className="flex flex-wrap gap-2 items-center">
+                            <input
+                              value={row.name}
+                              onChange={(e) => {
+                                const next = [...itemExtras];
+                                next[idx] = { ...next[idx], name: e.target.value };
+                                setItemExtras(next);
+                              }}
+                              placeholder="Ej: Tocineta extra"
+                              className="flex-1 min-w-[140px] border border-n-200 rounded-lg px-3 py-2 text-sm"
+                            />
+                            <input
+                              value={row.price}
+                              onChange={(e) => {
+                                const next = [...itemExtras];
+                                next[idx] = { ...next[idx], price: e.target.value.replace(/\D/g, '') };
+                                setItemExtras(next);
+                              }}
+                              placeholder="Precio"
+                              className="w-28 border border-n-200 rounded-lg px-3 py-2 text-sm"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => setItemExtras(itemExtras.filter((_, i) => i !== idx))}
+                              className="cursor-pointer text-red-500 p-2"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => setItemExtras([...itemExtras, emptyExtraRow()])}
+                          className="cursor-pointer text-sm text-primary font-semibold"
+                        >
+                          + Añadir extra
+                        </button>
+                      </div>
+                      <div>
+                        <p className="text-xs font-bold text-n-600 mb-1">Ingredientes que se pueden quitar</p>
+                        <textarea
+                          value={itemRemovables}
+                          onChange={(e) => setItemRemovables(e.target.value)}
+                          placeholder={'Uno por línea, ej:\nCebolla\nTomate'}
+                          rows={3}
+                          className="w-full border border-n-200 rounded-lg px-3 py-2 text-sm"
+                        />
+                      </div>
+                    </div>
+
                     <div className="flex gap-2">
                       <Button
                         size="sm"
                         disabled={!itemForm.name || !itemForm.price}
-                        onClick={() =>
+                        onClick={() => {
+                          const customization = buildCustomizationFromForm(itemExtras, itemRemovables);
                           createItem.mutate({
                             categoryId: cat.id,
                             name: itemForm.name,
@@ -310,8 +435,9 @@ export default function MenuPage() {
                             price: Number(itemForm.price),
                             imageUrl: itemForm.imageUrl || undefined,
                             badge: itemForm.badge || undefined,
-                          })
-                        }
+                            ...(customization ? { customization } : {}),
+                          });
+                        }}
                         isLoading={createItem.isPending}
                       >
                         Guardar item
@@ -329,42 +455,154 @@ export default function MenuPage() {
                 ) : (
                   <div className="divide-y divide-n-50">
                     {cat.items.map((item: any) => (
-                      <div key={item.id} className="px-6 py-4 flex items-center gap-4">
-                        {item.imageUrl && (
-                          <img src={item.imageUrl} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-n-100 shrink-0" />
-                        )}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className={`font-semibold ${!item.isAvailable ? 'line-through text-n-300' : ''}`}>
-                              {item.name}
-                            </p>
-                            {item.badge && (
-                              <Badge variant={item.badge === 'popular' ? 'popular' : item.badge === 'nuevo' ? 'nuevo' : item.badge === 'picante' ? 'warning' : 'default'}>
-                                {item.badge}
-                              </Badge>
-                            )}
+                      <div key={item.id} className="border-b border-n-50 last:border-0">
+                        <div className="px-6 py-4 flex items-center gap-4">
+                          {item.imageUrl && (
+                            <img src={item.imageUrl} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-n-100 shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <p className={`font-semibold ${!item.isAvailable ? 'line-through text-n-300' : ''}`}>
+                                {item.name}
+                              </p>
+                              {item.badge && (
+                                <Badge variant={item.badge === 'popular' ? 'popular' : item.badge === 'nuevo' ? 'nuevo' : item.badge === 'picante' ? 'warning' : 'default'}>
+                                  {item.badge}
+                                </Badge>
+                              )}
+                              {normalizeMenuCustomization(item.customization) && (
+                                <span className="text-[10px] font-bold uppercase tracking-wide text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                                  Personalizable
+                                </span>
+                              )}
+                            </div>
+                            {item.description && <p className="text-sm text-n-400 truncate">{item.description}</p>}
                           </div>
-                          {item.description && <p className="text-sm text-n-400 truncate">{item.description}</p>}
+                          <p className="font-bold text-primary whitespace-nowrap shrink-0">{formatPrice(Number(item.price))}</p>
+                          <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                editingCustomItemId === item.id
+                                  ? setEditingCustomItemId(null)
+                                  : openCustomizationEditor(item)
+                              }
+                              className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 ${
+                                editingCustomItemId === item.id
+                                  ? 'bg-primary text-white'
+                                  : 'bg-n-100 text-n-600 hover:bg-n-200'
+                              }`}
+                            >
+                              <SlidersHorizontal className="w-3.5 h-3.5" />
+                              Extras
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => toggleItem.mutate({ id: item.id, isAvailable: !item.isAvailable })}
+                              disabled={toggleItem.isPending && toggleItem.variables?.id === item.id}
+                              className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
+                                item.isAvailable ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-n-100 text-n-400 hover:bg-n-200'
+                              }`}
+                            >
+                              {item.isAvailable ? 'Activo' : 'Inactivo'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => confirm('¿Eliminar item?') && deleteItem.mutate(item.id)}
+                              disabled={deleteItem.isPending}
+                              className="cursor-pointer p-1.5 rounded-lg hover:bg-red-50 text-n-300 hover:text-red-500 transition-colors disabled:opacity-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
-                        <p className="font-bold text-primary whitespace-nowrap shrink-0">{formatPrice(Number(item.price))}</p>
-                        <div className="flex gap-1 shrink-0">
-                          <button
-                            onClick={() => toggleItem.mutate({ id: item.id, isAvailable: !item.isAvailable })}
-                            disabled={toggleItem.isPending && toggleItem.variables?.id === item.id}
-                            className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-60 ${
-                              item.isAvailable ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100' : 'bg-n-100 text-n-400 hover:bg-n-200'
-                            }`}
-                          >
-                            {item.isAvailable ? 'Activo' : 'Inactivo'}
-                          </button>
-                          <button
-                            onClick={() => confirm('¿Eliminar item?') && deleteItem.mutate(item.id)}
-                            disabled={deleteItem.isPending}
-                            className="cursor-pointer p-1.5 rounded-lg hover:bg-red-50 text-n-300 hover:text-red-500 transition-colors disabled:opacity-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
+                        {editingCustomItemId === item.id && (
+                          <div className="px-6 py-4 bg-n-50 border-t border-n-100 space-y-3">
+                            <p className="text-sm font-semibold text-n-800">
+                              Personalización para «{item.name}»
+                            </p>
+                            <div className="space-y-2">
+                              <p className="text-xs font-bold text-n-600">Extras / toppings (nombre + precio)</p>
+                              {editExtras.map((row, idx) => (
+                                <div key={idx} className="flex flex-wrap gap-2 items-center">
+                                  <input
+                                    value={row.name}
+                                    onChange={(e) => {
+                                      const next = [...editExtras];
+                                      next[idx] = { ...next[idx], name: e.target.value };
+                                      setEditExtras(next);
+                                    }}
+                                    placeholder="Nombre del extra"
+                                    className="flex-1 min-w-[140px] border border-n-200 rounded-lg px-3 py-2 text-sm bg-white"
+                                  />
+                                  <input
+                                    value={row.price}
+                                    onChange={(e) => {
+                                      const next = [...editExtras];
+                                      next[idx] = { ...next[idx], price: e.target.value.replace(/\D/g, '') };
+                                      setEditExtras(next);
+                                    }}
+                                    placeholder="Precio"
+                                    className="w-28 border border-n-200 rounded-lg px-3 py-2 text-sm bg-white"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditExtras(editExtras.filter((_, i) => i !== idx))}
+                                    className="cursor-pointer text-red-500 p-2"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                              <button
+                                type="button"
+                                onClick={() => setEditExtras([...editExtras, emptyExtraRow()])}
+                                className="cursor-pointer text-sm text-primary font-semibold"
+                              >
+                                + Añadir extra
+                              </button>
+                            </div>
+                            <div>
+                              <p className="text-xs font-bold text-n-600 mb-1">Ingredientes quitables (una por línea)</p>
+                              <textarea
+                                value={editRemovables}
+                                onChange={(e) => setEditRemovables(e.target.value)}
+                                rows={3}
+                                className="w-full border border-n-200 rounded-lg px-3 py-2 text-sm bg-white"
+                              />
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                size="sm"
+                                isLoading={updateItemCustom.isPending}
+                                onClick={() => {
+                                  const customization = buildCustomizationFromForm(editExtras, editRemovables);
+                                  updateItemCustom.mutate({
+                                    id: item.id,
+                                    customization: customization as Record<string, unknown> | null,
+                                  });
+                                }}
+                              >
+                                Guardar personalización
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                disabled={updateItemCustom.isPending}
+                                onClick={() => {
+                                  if (confirm('¿Quitar toda la personalización de este plato?')) {
+                                    updateItemCustom.mutate({ id: item.id, customization: null });
+                                  }
+                                }}
+                              >
+                                Quitar todo
+                              </Button>
+                              <Button variant="ghost" size="sm" onClick={() => setEditingCustomItemId(null)}>
+                                Cerrar
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>

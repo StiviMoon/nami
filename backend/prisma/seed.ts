@@ -62,7 +62,19 @@ const restaurants = [
       {
         name: 'Hamburguesas',
         items: [
-          { name: 'Clásica', description: 'Carne 200g, lechuga, tomate, cebolla caramelizada', price: 22000 },
+          {
+            name: 'Clásica',
+            description: 'Carne 200g, lechuga, tomate, cebolla caramelizada',
+            price: 22000,
+            customization: {
+              extras: [
+                { id: 'toc', name: 'Tocineta extra', price: 4000 },
+                { id: 'hue', name: 'Huevo frito', price: 2500 },
+                { id: 'qd', name: 'Queso doble', price: 3000 },
+              ],
+              removables: ['Cebolla', 'Tomate', 'Pepinillos'],
+            },
+          },
           { name: 'BBQ Bacon', description: 'Carne 200g, tocineta, cheddar, salsa BBQ artesanal', price: 26000 },
           { name: 'Doble Smash', description: 'Doble carne smash 150g c/u, queso americano, pepinillos', price: 28000 },
           { name: 'Veggie', description: 'Portobello, queso de cabra, rúgula, pesto', price: 20000 },
@@ -228,11 +240,12 @@ async function seed() {
                 name: cat.name,
                 order: catIdx,
                 items: {
-                  create: cat.items.map((item, itemIdx) => ({
-                    name: item.name,
-                    description: item.description || null,
-                    price: item.price,
+                  create: cat.items.map((item: Record<string, unknown>, itemIdx: number) => ({
+                    name: item.name as string,
+                    description: (item.description as string) || null,
+                    price: item.price as number,
                     order: itemIdx,
+                    ...(item.customization ? { customization: item.customization as object } : {}),
                   })),
                 },
               })),

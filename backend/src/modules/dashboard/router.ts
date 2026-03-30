@@ -9,6 +9,7 @@ import {
   createCategorySchema,
   createMenuItemSchema,
   updateMenuItemSchema,
+  toPrismaCustomization,
 } from './validators';
 
 const router = Router();
@@ -139,7 +140,15 @@ router.post('/items', async (req: Request, res: Response, next: NextFunction) =>
       }
     }
 
-    const item = await prisma.menuItem.create({ data });
+    const { customization: customizationBody, ...itemFields } = data;
+    const customization = toPrismaCustomization(customizationBody ?? undefined);
+
+    const item = await prisma.menuItem.create({
+      data: {
+        ...itemFields,
+        ...(customization !== undefined ? { customization } : {}),
+      },
+    });
     res.status(201).json({ success: true, data: item });
   } catch (err) {
     next(err);
@@ -160,9 +169,15 @@ router.put('/items/:id', async (req: Request, res: Response, next: NextFunction)
     });
     if (!item || item.category.restaurantId !== req.user.restaurantId) throw new ForbiddenError();
 
+    const { customization: customizationBody, ...patch } = data;
+    const customization = toPrismaCustomization(customizationBody ?? undefined);
+
     const updated = await prisma.menuItem.update({
       where: { id: itemId },
-      data,
+      data: {
+        ...patch,
+        ...(customization !== undefined ? { customization } : {}),
+      },
     });
 
     res.json({ success: true, data: updated });

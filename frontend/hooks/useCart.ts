@@ -2,12 +2,22 @@
 
 import { create } from 'zustand';
 
+export interface CartExtra {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface CartItem {
+  lineId: string;
   id: string;
   restaurantId: string;
   name: string;
+  /** Precio unitario (base + extras seleccionados) */
   price: number;
   quantity: number;
+  chosenExtras?: CartExtra[];
+  chosenExclusions?: string[];
 }
 
 interface CartStore {
@@ -17,9 +27,9 @@ interface CartStore {
   restaurantWhatsapp: string | null;
 
   addItem: (item: Omit<CartItem, 'quantity'>, restaurantName: string, whatsapp: string) => void;
-  removeItem: (id: string) => void;
-  increase: (id: string) => void;
-  decrease: (id: string) => void;
+  removeItem: (lineId: string) => void;
+  increase: (lineId: string) => void;
+  decrease: (lineId: string) => void;
   clear: () => void;
   total: () => number;
   buildWhatsAppUrl: (
@@ -47,10 +57,12 @@ export const useCart = create<CartStore>((set, get) => ({
           restaurantWhatsapp: whatsapp,
         };
       }
-      const existing = s.items.find((i) => i.id === item.id);
+      const existing = s.items.find((i) => i.lineId === item.lineId);
       if (existing) {
         return {
-          items: s.items.map((i) => (i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i)),
+          items: s.items.map((i) =>
+            i.lineId === item.lineId ? { ...i, quantity: i.quantity + 1 } : i
+          ),
           restaurantId: item.restaurantId,
           restaurantName,
           restaurantWhatsapp: whatsapp,
@@ -64,17 +76,17 @@ export const useCart = create<CartStore>((set, get) => ({
       };
     }),
 
-  removeItem: (id) => set((s) => ({ items: s.items.filter((i) => i.id !== id) })),
+  removeItem: (lineId) => set((s) => ({ items: s.items.filter((i) => i.lineId !== lineId) })),
 
-  increase: (id) =>
+  increase: (lineId) =>
     set((s) => ({
-      items: s.items.map((i) => (i.id === id ? { ...i, quantity: i.quantity + 1 } : i)),
+      items: s.items.map((i) => (i.lineId === lineId ? { ...i, quantity: i.quantity + 1 } : i)),
     })),
 
-  decrease: (id) =>
+  decrease: (lineId) =>
     set((s) => ({
       items: s.items
-        .map((i) => (i.id === id ? { ...i, quantity: i.quantity - 1 } : i))
+        .map((i) => (i.lineId === lineId ? { ...i, quantity: i.quantity - 1 } : i))
         .filter((i) => i.quantity > 0),
     })),
 
@@ -84,9 +96,17 @@ export const useCart = create<CartStore>((set, get) => ({
 
   buildWhatsAppUrl: (paymentMethod, deliveryMode, deliveryAddress, deliveryPhone, customerName) => {
     const s = get();
-    const itemsList = s.items
-      .map((i) => `- ${i.quantity} x ${sanitizeLine(i.name)}: $${(i.price * i.quantity).toLocaleString('es-CO')}`)
-      .join('\n');
+    const lines = s.items.map((i) => {
+      const sub = i.price * i.quantity;
+      let block = `- ${i.quantity} x ${sanitizeLine(i.name)}: $${sub.toLocaleString('es-CO')}`;
+      const extras = i.chosenExtras?.map((e) => `  + ${sanitizeLine(e.name)} (+$${e.price.toLocaleString('es-CO')})`) ?? [];
+      const excl = i.chosenExclusions?.map((x) => `  Sin ${sanitizeLine(x)}`) ?? [];
+      if (extras.length || excl.length) {
+        block += '\n' + [...extras, ...excl].join('\n');
+      }
+      return block;
+    });
+    const itemsList = lines.join('\n');
 
     const total = s.total().toLocaleString('es-CO');
     const mode = deliveryMode === 'delivery' ? 'A domicilio' : 'Para recoger';

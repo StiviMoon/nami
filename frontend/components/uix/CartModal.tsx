@@ -115,18 +115,28 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
         <div className="flex-1 overflow-y-auto p-6 sm:p-8">
           {step === 'review' && (
             <div className="space-y-4">
-              {cart.items.map((item, i) => (
+              {cart.items.map((item) => (
                 <div
-                  key={`${item.id}-${i}`}
+                  key={item.lineId}
                   className="flex justify-between items-start py-4 border-b border-gray-50 last:border-0"
                 >
                   <div className="flex-1 pr-4">
                     <h4 className="font-black text-sm text-gray-900">{item.name}</h4>
+                    {item.chosenExtras?.map((e) => (
+                      <p key={e.id} className="text-[10px] text-green-600 font-bold mt-0.5">
+                        + {e.name}
+                      </p>
+                    ))}
+                    {item.chosenExclusions?.map((ex) => (
+                      <p key={ex} className="text-[10px] text-red-500 font-bold italic mt-0.5">
+                        Sin {ex}
+                      </p>
+                    ))}
                   </div>
                   <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-1.5">
                     <button
                       type="button"
-                      onClick={() => cart.decrease(item.id)}
+                      onClick={() => cart.decrease(item.lineId)}
                       className="w-8 h-8 flex items-center justify-center bg-white rounded-lg cursor-pointer"
                     >
                       <Minus size={14} />
@@ -134,7 +144,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                     <span className="font-black text-sm w-4 text-center">{item.quantity}</span>
                     <button
                       type="button"
-                      onClick={() => cart.increase(item.id)}
+                      onClick={() => cart.increase(item.lineId)}
                       className="w-8 h-8 flex items-center justify-center bg-white rounded-lg cursor-pointer"
                     >
                       <Plus size={14} />
@@ -234,14 +244,24 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
           {step === 'summary' && (
             <div className="space-y-6">
               <div className="bg-orange-50 p-6 rounded-[2rem] space-y-3 border border-orange-100/80">
-                {cart.items.map((item, i) => (
-                  <div key={`${item.id}-${i}`} className="flex flex-col border-b border-orange-100 pb-2 last:border-0">
+                {cart.items.map((item) => (
+                  <div key={item.lineId} className="flex flex-col border-b border-orange-100 pb-2 last:border-0">
                     <div className="flex justify-between text-sm font-black text-gray-900">
                       <span>
                         {item.quantity}x {item.name}
                       </span>
                       <span>{formatPrice(item.price * item.quantity)}</span>
                     </div>
+                    {item.chosenExtras?.map((e) => (
+                      <span key={e.id} className="text-[9px] text-green-600 font-bold ml-4">
+                        + {e.name}
+                      </span>
+                    ))}
+                    {item.chosenExclusions?.map((ex) => (
+                      <span key={ex} className="text-[9px] text-red-500 font-bold italic ml-4">
+                        Sin {ex}
+                      </span>
+                    ))}
                   </div>
                 ))}
                 <div className="pt-2 flex justify-between items-center font-black">

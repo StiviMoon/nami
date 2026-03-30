@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { Prisma } from '@prisma/client';
 
 const nullableUrlInput = z.preprocess(
   (value) => (value === '' ? null : value),
@@ -33,6 +34,46 @@ export const createCategorySchema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
 });
 
+export const menuCustomizationSchema = z
+  .object({
+    extras: z
+      .array(
+        z.object({
+          id: z.string().min(1).max(64).optional(),
+          name: z.string().min(1).max(120),
+          price: z.number().nonnegative(),
+        })
+      )
+      .max(25)
+      .optional(),
+    removables: z.array(z.string().min(1).max(80)).max(30).optional(),
+  })
+  .strict();
+
+export type MenuCustomizationInput = z.infer<typeof menuCustomizationSchema>;
+
+/** Para Prisma: undefined = no tocar; null / vacío = borrar JSON */
+export function toPrismaCustomization(
+  value: MenuCustomizationInput | null | undefined
+): Prisma.InputJsonValue | typeof Prisma.JsonNull | undefined {
+  if (value === undefined) return undefined;
+  if (value === null) {
+    return Prisma.JsonNull;
+  }
+  const extras = (value.extras ?? []).map((e, i) => ({
+    id: (e.id?.trim() || `extra-${i}`).slice(0, 64),
+    name: e.name.trim(),
+    price: e.price,
+  }));
+  const removables = [
+    ...new Set((value.removables ?? []).map((s) => s.trim()).filter(Boolean)),
+  ] as string[];
+  if (extras.length === 0 && removables.length === 0) {
+    return Prisma.JsonNull;
+  }
+  return { extras, removables };
+}
+
 export const createMenuItemSchema = z.object({
   categoryId: z.string().cuid(),
   name: z.string().min(2),
@@ -40,6 +81,7 @@ export const createMenuItemSchema = z.object({
   price: z.number().positive('Precio debe ser positivo'),
   imageUrl: nullableUrlInput,
   badge: z.enum(['popular', 'nuevo', 'picante', 'recomendado']).optional().nullable(),
+  customization: menuCustomizationSchema.nullish(),
 });
 
 export const updateMenuItemSchema = z.object({
@@ -50,4 +92,5 @@ export const updateMenuItemSchema = z.object({
   isAvailable: z.boolean().optional(),
   order: z.number().int().optional(),
   badge: z.enum(['popular', 'nuevo', 'picante', 'recomendado']).optional().nullable(),
+  customization: menuCustomizationSchema.nullish(),
 });
