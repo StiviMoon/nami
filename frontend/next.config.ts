@@ -24,15 +24,7 @@ const nextConfig: NextConfig = {
         source: '/manifest.json',
         headers: [{ key: 'Cache-Control', value: 'public, max-age=3600, must-revalidate' }],
       },
-      {
-        source: '/:path*',
-        headers: [
-          { key: 'X-Content-Type-Options', value: 'nosniff' },
-          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-          { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
-          { key: 'X-DNS-Prefetch-Control', value: 'on' },
-        ],
-      },
+      // Cabeceras de seguridad para páginas: ver middleware.ts (excluye /_next/static).
     ];
   },
   async rewrites() {
