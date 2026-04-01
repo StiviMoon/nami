@@ -8,11 +8,29 @@ import { queryKeys } from '@/lib/queryKeys';
 import { formatPrice } from '@/lib/utils';
 import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal } from 'lucide-react';
 import { normalizeMenuCustomization } from '@/lib/menu-customization';
+import { compressImage } from '@/lib/image-compress';
 import { Button } from '@/components/ui/button';
 import { toast } from '@/components/ui/toast';
 import { PageTransition, FadeIn } from '@/components/motion';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
+
+interface MenuItem {
+  id: string;
+  name: string;
+  description?: string;
+  price: number | string;
+  imageUrl?: string;
+  badge?: string;
+  isAvailable: boolean;
+  customization?: unknown;
+}
+
+interface MenuCategory {
+  id: string;
+  name: string;
+  items: MenuItem[];
+}
 
 const BADGE_OPTIONS = [
   { value: '', label: 'Sin badge' },
@@ -30,7 +48,7 @@ const emptyExtraRow = (): ExtraRow => ({ id: '', name: '', price: '' });
 function buildCustomizationFromForm(extras: ExtraRow[], removablesText: string) {
   const extrasArr = extras
     .filter((r) => r.name.trim())
-    .map((r, i) => ({
+    .map((r) => ({
       id: r.id.trim() || undefined,
       name: r.name.trim(),
       price: Number(String(r.price).replace(/\D/g, '')) || 0,
@@ -49,7 +67,7 @@ function buildCustomizationFromForm(extras: ExtraRow[], removablesText: string) 
 export default function MenuPage() {
   const qc = useQueryClient();
   const { data: restaurant, isLoading } = useMyRestaurant();
-  const categories = restaurant?.categories ?? [];
+  const categories = (restaurant?.categories ?? []) as MenuCategory[];
 
   const [newCat, setNewCat] = useState('');
   const [showAddCat, setShowAddCat] = useState(false);
@@ -86,7 +104,7 @@ export default function MenuPage() {
   });
 
   const createItem = useMutation({
-    mutationFn: (data: any) => api.post('/api/dashboard/items', data),
+    mutationFn: (data: Record<string, unknown>) => api.post('/api/dashboard/items', data),
     onSuccess: () => {
       invalidate();
       setAddingItem(null);
@@ -95,7 +113,7 @@ export default function MenuPage() {
       setUploadError('');
       toast('Item guardado', 'success');
     },
-    onError: (err: any) => toast(err.message || 'Error al guardar item', 'error'),
+    onError: (err: Error) => toast(err.message || 'Error al guardar item', 'error'),
   });
 
   // Optimistic update: cambia isAvailable en el caché sin esperar respuesta
@@ -107,15 +125,15 @@ export default function MenuPage() {
 
       const previous = qc.getQueryData(queryKeys.dashboard.restaurant);
 
-      qc.setQueryData(queryKeys.dashboard.restaurant, (old: any) => {
+      qc.setQueryData(queryKeys.dashboard.restaurant, (old: { data?: { categories?: MenuCategory[] } }) => {
         if (!old?.data?.categories) return old;
         return {
           ...old,
           data: {
             ...old.data,
-            categories: old.data.categories.map((cat: any) => ({
+            categories: old.data.categories.map((cat) => ({
               ...cat,
-              items: cat.items.map((item: any) =>
+              items: cat.items.map((item) =>
                 item.id === id ? { ...item, isAvailable } : item
               ),
             })),
@@ -173,20 +191,21 @@ export default function MenuPage() {
     setUploadingImage(true);
     setUploadError('');
     try {
-      const sign = await api.post('/api/dashboard/upload-url', { filename: imageFile.name });
+      const compressed = await compressImage(imageFile);
+      const sign = await api.post('/api/dashboard/upload-url', { filename: compressed.name });
       const { signedUrl, publicUrl } = sign?.data ?? {};
       if (!signedUrl || !publicUrl) throw new Error('No se pudo obtener URL de subida');
 
       const uploadRes = await fetch(signedUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': imageFile.type || 'application/octet-stream' },
-        body: imageFile,
+        headers: { 'Content-Type': compressed.type || 'application/octet-stream' },
+        body: compressed,
       });
       if (!uploadRes.ok) throw new Error('Error subiendo imagen');
 
       setItemForm((prev) => ({ ...prev, imageUrl: publicUrl }));
-    } catch (error: any) {
-      setUploadError(error?.message || 'No se pudo subir la imagen');
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'No se pudo subir la imagen');
     } finally {
       setUploadingImage(false);
     }
@@ -203,7 +222,7 @@ export default function MenuPage() {
     );
   }
 
-  const totalItems = categories.reduce((sum: number, c: any) => sum + c.items.length, 0);
+  const totalItems = categories.reduce((sum: number, c: MenuCategory) => sum + c.items.length, 0);
 
   return (
     <PageTransition>
@@ -256,12 +275,12 @@ export default function MenuPage() {
           </div>
         ) : (
           <div className="space-y-6">
-            {categories.map((cat: any) => (
+            {categories.map((cat: MenuCategory) => (
               <div key={cat.id} className="bg-white rounded-2xl border border-n-100 overflow-hidden">
                 {/* Header categoría */}
-                <div className="flex justify-between items-center px-6 py-4 bg-n-50 border-b border-n-100">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 px-4 sm:px-6 py-4 bg-n-50 border-b border-n-100">
                   <h3 className="font-display font-semibold text-lg">{cat.name}</h3>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 self-start sm:self-auto">
                     <button
                       onClick={() => {
                         const next = addingItem === cat.id ? null : cat.id;
@@ -362,7 +381,7 @@ export default function MenuPage() {
 
                     {/* Personalización (extras / quitables) */}
                     <div className="mb-4 rounded-xl border border-n-200 p-4 bg-white">
-                      <label className="block text-sm font-semibold mb-1 flex items-center gap-2">
+                      <label className="text-sm font-semibold mb-1 flex items-center gap-2">
                         <SlidersHorizontal className="w-4 h-4" />
                         Personalización del plato (opcional)
                       </label>
@@ -454,13 +473,14 @@ export default function MenuPage() {
                   <div className="px-6 py-8 text-center text-n-300 text-sm">Sin items aún</div>
                 ) : (
                   <div className="divide-y divide-n-50">
-                    {cat.items.map((item: any) => (
+                    {cat.items.map((item: MenuItem) => (
                       <div key={item.id} className="border-b border-n-50 last:border-0">
-                        <div className="px-6 py-4 flex items-center gap-4">
+                        <div className="px-4 sm:px-6 py-4 space-y-3">
+                          <div className="flex items-start gap-3">
                           {item.imageUrl && (
                             <img src={item.imageUrl} alt={item.name} className="w-14 h-14 rounded-lg object-cover border border-n-100 shrink-0" />
                           )}
-                          <div className="flex-1 min-w-0">
+                            <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 flex-wrap">
                               <p className={`font-semibold ${!item.isAvailable ? 'line-through text-n-300' : ''}`}>
                                 {item.name}
@@ -478,8 +498,11 @@ export default function MenuPage() {
                             </div>
                             {item.description && <p className="text-sm text-n-400 truncate">{item.description}</p>}
                           </div>
-                          <p className="font-bold text-primary whitespace-nowrap shrink-0">{formatPrice(Number(item.price))}</p>
-                          <div className="flex gap-1 shrink-0 flex-wrap justify-end">
+                            <p className="font-bold text-primary whitespace-nowrap shrink-0 text-sm sm:text-base">
+                              {formatPrice(Number(item.price))}
+                            </p>
+                          </div>
+                          <div className="flex gap-1 flex-wrap">
                             <button
                               type="button"
                               onClick={() =>

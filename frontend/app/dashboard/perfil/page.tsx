@@ -15,6 +15,7 @@ import {
   Save, ImagePlus, MapPin, Palette, Type, LayoutGrid, LayoutList,
   Instagram, Globe, Clock, MessageCircle, Store,
 } from 'lucide-react';
+import { compressImage } from '@/lib/image-compress';
 
 const DAYS = [
   { key: 'lun', label: 'Lunes' },
@@ -180,15 +181,16 @@ export default function PerfilPage() {
     setUploadingLogo(true);
 
     try {
-      const sign = await api.post('/api/dashboard/upload-url', { filename: file.name });
-      const signedUrl: string = sign?.data?.signedUrl;
-      const publicUrl: string = sign?.data?.publicUrl;
+      const compressed = await compressImage(file);
+      const sign = await api.post('/api/dashboard/upload-url', { filename: compressed.name });
+      const signedUrl = sign?.data?.signedUrl;
+      const publicUrl = sign?.data?.publicUrl;
       if (!signedUrl || !publicUrl) throw new Error('No se pudo obtener URL de subida');
 
       const uploadRes = await fetch(signedUrl, {
         method: 'PUT',
-        headers: { 'Content-Type': file.type || 'application/octet-stream' },
-        body: file,
+        headers: { 'Content-Type': compressed.type || 'application/octet-stream' },
+        body: compressed,
       });
       if (!uploadRes.ok) throw new Error('Error subiendo imagen');
 

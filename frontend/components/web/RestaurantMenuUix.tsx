@@ -6,7 +6,7 @@ import { ArrowLeft, Clock, MapPin, Settings2 } from 'lucide-react';
 import { Instagram, Facebook } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { formatPrice } from '@/lib/utils';
-import { formatTodayHoursLabel, type WeekSchedule } from '@/lib/uix-schedule';
+import { formatTodayHoursLabel, isOpenNow, type WeekSchedule } from '@/lib/uix-schedule';
 import { ProductImageCarousel } from '@/components/uix/ProductImageCarousel';
 import { CartModal, CartFloatingBarUix } from '@/components/uix/CartModal';
 import { ClosedStoreModal } from '@/components/web/ClosedStoreModal';
@@ -73,7 +73,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
     extras?: MenuExtra[];
     removables?: string[];
   } | null>(null);
-  const open = !restaurant.isClosed;
+  const open = isOpenNow(schedule, restaurant.isClosed);
 
   useEffect(() => {
     if (restaurant.isClosed) setClosedModalOpen(true);

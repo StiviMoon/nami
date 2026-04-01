@@ -1,91 +1,68 @@
-'use client';
+import type { Metadata } from 'next';
+import { RestaurantContent } from './restaurant-content';
 
-import { useQuery } from '@tanstack/react-query';
-import { api } from '@/lib/api';
-import { queryKeys } from '@/lib/queryKeys';
-import Link from 'next/link';
-import { use, useEffect, useState, type ComponentProps } from 'react';
-import { PageTransition } from '@/components/motion';
-import { EmptyState } from '@/components/ui/empty-state';
-import { Skeleton, SkeletonText } from '@/components/ui/skeleton';
-import { RestaurantMenuUix } from '@/components/web/RestaurantMenuUix';
-import type { WeekSchedule } from '@/lib/uix-schedule';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://nami.app';
 
-export default function RestaurantPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = use(params);
-  const [parsedSchedule, setParsedSchedule] = useState<WeekSchedule | null>(null);
-
-  const { data, isLoading } = useQuery({
-    queryKey: queryKeys.restaurants.bySlug(slug),
-    queryFn: () => api.get(`/api/restaurants/${slug}?includeMenu=true`),
-    select: (res) => res.data as { restaurant: Record<string, unknown>; menu: unknown[] },
-  });
-
-  const restaurant = data?.restaurant as
-    | {
-        id: string;
-        name: string;
-        address?: string | null;
-        description?: string | null;
-        coverUrl?: string | null;
-        isClosed: boolean;
-        plan: string;
-        schedule?: string | null;
-        whatsapp?: string | null;
-        instagram?: string | null;
-        tiktok?: string | null;
-        facebook?: string | null;
-      }
-    | undefined;
-
-  const categories = (data?.menu ?? []) as ComponentProps<typeof RestaurantMenuUix>['categories'];
-
-  useEffect(() => {
-    if (!restaurant?.schedule) {
-      setParsedSchedule(null);
-      return;
-    }
-    try {
-      setParsedSchedule(JSON.parse(restaurant.schedule) as WeekSchedule);
-    } catch {
-      setParsedSchedule(null);
-    }
-  }, [restaurant?.schedule]);
-
-  if (isLoading) {
-    return (
-      <main className="min-h-screen bg-gray-50">
-        <Skeleton className="h-56 w-full rounded-none" />
-        <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-10">
-          <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-gray-100 space-y-4">
-            <Skeleton className="h-8 w-2/3" />
-            <Skeleton className="h-4 w-1/3" />
-            <SkeletonText lines={2} />
-          </div>
-        </div>
-      </main>
-    );
+async function getRestaurant(slug: string) {
+  try {
+    const res = await fetch(`${API_URL}/api/restaurants/${slug}`, {
+      next: { revalidate: 60 },
+    });
+    if (!res.ok) return null;
+    const json = await res.json();
+    return json?.data ?? null;
+  } catch {
+    return null;
   }
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
+  const { slug } = await params;
+  const restaurant = await getRestaurant(slug);
 
   if (!restaurant) {
-    return (
-      <EmptyState
-        emoji="🍽️"
-        title="Restaurante no encontrado"
-        description="Este restaurante no existe o fue eliminado."
-        action={
-          <Link href="/feed" className="text-[#E85D04] font-black hover:underline text-sm">
-            Volver al feed
-          </Link>
-        }
-        className="min-h-screen bg-gray-50"
-      />
-    );
+    return { title: 'Restaurante no encontrado — ÑAMI' };
   }
 
-  return (
-    <PageTransition>
-      <RestaurantMenuUix restaurant={restaurant} categories={categories} slug={slug} schedule={parsedSchedule} />
-    </PageTransition>
-  );
+  const title = `${restaurant.name} — Menú y pedidos | ÑAMI`;
+  const description = restaurant.description
+    ? `${restaurant.description.slice(0, 150)} — Pide directo por WhatsApp sin comisiones.`
+    : `Descubre el menú de ${restaurant.name} en Yumbo. Pide directo por WhatsApp.`;
+  const url = `${SITE_URL}/${slug}`;
+  const image = restaurant.coverUrl || restaurant.logoUrl || `${SITE_URL}/og-default.png`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical: url },
+    openGraph: {
+      title: restaurant.name,
+      description,
+      url,
+      siteName: 'ÑAMI',
+      type: 'website',
+      images: [{ url: image, width: 1200, height: 630, alt: restaurant.name }],
+      locale: 'es_CO',
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: restaurant.name,
+      description,
+      images: [image],
+    },
+  };
+}
+
+export default async function RestaurantPage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = await params;
+  return <RestaurantContent slug={slug} />;
 }

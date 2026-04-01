@@ -1,7 +1,7 @@
 'use client';
 
 import { motion, AnimatePresence } from 'framer-motion';
-import { drawerSlide, backdropFade } from '@/components/motion/variants';
+import { backdropFade } from '@/components/motion/variants';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ReactNode } from 'react';

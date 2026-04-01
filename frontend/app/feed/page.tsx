@@ -75,7 +75,7 @@ export default function FeedPage() {
                   type="button"
                   onClick={() => setShowFavorites(!showFavorites)}
                   title="Favoritos"
-                  className={`cursor-pointer p-2.5 rounded-full shrink-0 transition-all ${
+                  className={`cursor-pointer p-3 rounded-full shrink-0 transition-all ${
                     showFavorites
                       ? 'bg-red-50 text-red-500 scale-110'
                       : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
@@ -86,7 +86,7 @@ export default function FeedPage() {
                 <Link
                   href="/historial"
                   title="Mis pedidos"
-                  className="cursor-pointer p-2.5 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0 transition-all"
+                  className="cursor-pointer p-3 rounded-full text-gray-400 hover:bg-gray-100 hover:text-gray-600 shrink-0 transition-all"
                 >
                   <Clock className="w-5 h-5" />
                 </Link>
@@ -98,7 +98,7 @@ export default function FeedPage() {
               </span>
             </div>
 
-            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide -mx-1 px-1 pr-8">
               <button
                 type="button"
                 onClick={() => setCategory('all')}

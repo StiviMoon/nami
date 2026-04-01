@@ -15,6 +15,7 @@ interface Plan {
   features: string[];
   style: PlanStyle;
   cta: string;
+  ctaHref: string;
 }
 
 const plans: Plan[] = [
@@ -32,6 +33,7 @@ const plans: Plan[] = [
     ],
     style: 'default',
     cta: 'Empezar gratis',
+    ctaHref: '/register',
   },
   {
     name: 'Pro',
@@ -49,6 +51,7 @@ const plans: Plan[] = [
     ],
     style: 'highlight',
     cta: 'Comenzar con Pro',
+    ctaHref: '/contacto?plan=pro&from=landing',
   },
   {
     name: 'Business',
@@ -65,6 +68,7 @@ const plans: Plan[] = [
     ],
     style: 'dark',
     cta: 'Contactar ventas',
+    ctaHref: '/contacto?plan=business&from=landing',
   },
 ];
 
@@ -169,7 +173,7 @@ export function Plans() {
                 </div>
 
                 <Link
-                  href="/register"
+                  href={plan.ctaHref}
                   className={`cursor-pointer block w-full py-3 rounded-xl font-semibold text-[13px] text-center transition-all duration-300 mt-auto active:scale-[0.98] ${
                     isHighlight
                       ? 'bg-white text-primary hover:bg-n-50 shadow-sm'

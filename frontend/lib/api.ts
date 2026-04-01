@@ -6,7 +6,8 @@ function getAuthHeaders(): Record<string, string> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-async function request<T = any>(method: string, path: string, body?: any): Promise<T> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function request<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API}${path}`, {
     method,
     credentials: 'include',
@@ -20,7 +21,6 @@ async function request<T = any>(method: string, path: string, body?: any): Promi
   const json = await res.json();
 
   if (res.status === 401) {
-    // Token expirado — limpiar y redirigir al login
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       window.location.href = '/login';
@@ -33,9 +33,9 @@ async function request<T = any>(method: string, path: string, body?: any): Promi
 }
 
 export const api = {
-  get: <T = any>(path: string) => request<T>('GET', path),
-  post: <T = any>(path: string, body?: any) => request<T>('POST', path, body),
-  put: <T = any>(path: string, body?: any) => request<T>('PUT', path, body),
-  patch: <T = any>(path: string, body?: any) => request<T>('PATCH', path, body),
-  del: <T = any>(path: string) => request<T>('DELETE', path),
+  get: <T = any>(path: string) => request<T>('GET', path), // eslint-disable-line @typescript-eslint/no-explicit-any
+  post: <T = any>(path: string, body?: unknown) => request<T>('POST', path, body), // eslint-disable-line @typescript-eslint/no-explicit-any
+  put: <T = any>(path: string, body?: unknown) => request<T>('PUT', path, body), // eslint-disable-line @typescript-eslint/no-explicit-any
+  patch: <T = any>(path: string, body?: unknown) => request<T>('PATCH', path, body), // eslint-disable-line @typescript-eslint/no-explicit-any
+  del: <T = any>(path: string) => request<T>('DELETE', path), // eslint-disable-line @typescript-eslint/no-explicit-any
 };

@@ -6,6 +6,8 @@ import { motion } from 'framer-motion';
 import { FavoriteButton } from './FavoriteButton';
 import { Badge } from '@/components/ui/badge';
 import { useCart } from '@/hooks/useCart';
+import { Clock } from 'lucide-react';
+import { isOpenNow, getHoursFromRaw } from '@/lib/uix-schedule';
 
 interface Restaurant {
   id: string;
@@ -19,13 +21,15 @@ interface Restaurant {
   themePreset?: string;
   plan: string;
   isClosed: boolean;
+  schedule?: string | null;
   distance?: number | null;
 }
 
 export function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
   const cart = useCart();
   const hasPendingOrder = cart.restaurantId === r.id && cart.items.length > 0;
-  const open = !r.isClosed;
+  const open = isOpenNow(r.schedule, r.isClosed);
+  const todayHours = getHoursFromRaw(r.schedule);
 
   return (
     <motion.div variants={fadeInUp} whileHover={{ y: -4 }} transition={{ duration: 0.22 }}>
@@ -84,6 +88,12 @@ export function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
             <p className="text-gray-400 text-xs mt-3 italic line-clamp-2 leading-relaxed">
               &quot;{r.description}&quot;
             </p>
+          )}
+          {todayHours && (
+            <div className="mt-3 flex items-center gap-1.5 text-[10px] font-bold text-gray-400">
+              <Clock size={12} className="shrink-0" />
+              <span>{todayHours}</span>
+            </div>
           )}
         </div>
       </Link>

@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence, useInView, useMotionValue, useTransform, animate } from 'framer-motion';
 import { useRef, useEffect, type ReactNode } from 'react';
-import { fadeInUp, fadeIn, scaleIn, staggerContainer, slideInUp } from './variants';
+import { fadeInUp, fadeIn, scaleIn, staggerContainer } from './variants';
 
 interface AnimationProps {
   children: ReactNode;

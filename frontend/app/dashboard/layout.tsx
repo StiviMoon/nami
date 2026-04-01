@@ -89,7 +89,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </div>
 
       {/* Bottom nav — Mobile */}
-      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-n-100 z-50">
+      <nav className="md:hidden fixed bottom-0 inset-x-0 bg-white border-t border-n-100 z-50" style={{ paddingBottom: 'var(--safe-bottom)' }}>
         <div className="flex items-center justify-around py-2 px-2">
           {navItems.map((item) => {
             const isActive = pathname === item.href;

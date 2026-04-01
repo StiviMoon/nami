@@ -133,21 +133,21 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                       </p>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-1.5">
+                  <div className="flex items-center gap-2 bg-gray-50 rounded-xl p-1">
                     <button
                       type="button"
                       onClick={() => cart.decrease(item.lineId)}
-                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg cursor-pointer"
+                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg cursor-pointer active:scale-95 transition-transform"
                     >
-                      <Minus size={14} />
+                      <Minus size={16} />
                     </button>
-                    <span className="font-black text-sm w-4 text-center">{item.quantity}</span>
+                    <span className="font-black text-sm w-6 text-center">{item.quantity}</span>
                     <button
                       type="button"
                       onClick={() => cart.increase(item.lineId)}
-                      className="w-8 h-8 flex items-center justify-center bg-white rounded-lg cursor-pointer"
+                      className="w-10 h-10 flex items-center justify-center bg-white rounded-lg cursor-pointer active:scale-95 transition-transform"
                     >
-                      <Plus size={14} />
+                      <Plus size={16} />
                     </button>
                   </div>
                 </div>
@@ -380,7 +380,7 @@ export function CartFloatingBarUix({
 }) {
   if (cartCount <= 0) return null;
   return (
-    <div className="fixed bottom-6 left-0 right-0 flex justify-center z-50 px-6">
+    <div className="fixed left-0 right-0 flex justify-center z-50 px-6" style={{ bottom: 'calc(1.5rem + var(--safe-bottom))' }}>
       <button
         type="button"
         onClick={onOpen}

@@ -41,7 +41,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
       const restaurants = await prisma.$queryRawUnsafe<any[]>(
         `SELECT "id", "slug", "name", "description", "category", "address",
                 "logoUrl", "coverUrl", "themePreset", "menuStyle",
-                "plan", "isClosed", "whatsapp", "latitude", "longitude",
+                "plan", "isClosed", "schedule", "whatsapp", "latitude", "longitude",
                 CASE WHEN "latitude" IS NOT NULL AND "longitude" IS NOT NULL THEN
                   (6371 * acos(
                     LEAST(1, cos(radians($1)) * cos(radians("latitude")) *
@@ -91,7 +91,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
             id: true, slug: true, name: true, description: true,
             category: true, address: true, logoUrl: true, coverUrl: true,
             themePreset: true, menuStyle: true, plan: true,
-            isClosed: true, whatsapp: true, latitude: true, longitude: true,
+            isClosed: true, schedule: true, whatsapp: true, latitude: true, longitude: true,
           },
           orderBy: [{ plan: 'desc' }, { updatedAt: 'desc' }],
           take,

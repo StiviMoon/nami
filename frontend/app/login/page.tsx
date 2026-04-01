@@ -33,18 +33,18 @@ export default function LoginPage() {
         localStorage.setItem('token', res.data.token);
         router.push('/dashboard');
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <PageTransition>
-      <main className="min-h-screen flex">
+    <PageTransition className="min-w-0 w-full overflow-x-hidden">
+      <main className="min-h-screen min-h-[100dvh] flex w-full max-w-full min-w-0 overflow-x-hidden">
         {/* Left: Brand panel (desktop only) */}
-        <div className="hidden lg:flex flex-col justify-between w-[45%] bg-n-900 p-12 relative overflow-hidden">
+        <div className="hidden lg:flex flex-col shrink-0 justify-between w-[45%] min-w-0 bg-n-900 p-12 relative overflow-hidden">
           {/* Background */}
           <div className="absolute inset-0"
             style={{
@@ -87,11 +87,13 @@ export default function LoginPage() {
           <p className="relative z-10 text-n-600 text-xs">© 2026 ÑAMI · Yumbo, Colombia</p>
         </div>
 
-        {/* Right: Form */}
-        <div className="flex-1 flex items-center justify-center px-6 py-12 bg-n-50 relative">
-          <div className="absolute top-0 right-0 w-64 h-64 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl" />
+        {/* Right: Form — overflow hidden so blur decor never causes horizontal scroll */}
+        <div className="flex-1 min-w-0 flex flex-col items-center justify-center px-4 sm:px-6 py-10 sm:py-12 bg-n-50 relative overflow-x-hidden overflow-y-auto">
+          <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden>
+            <div className="absolute -top-20 right-[-3rem] w-72 h-72 rounded-full bg-primary/10 blur-3xl sm:right-[-2rem]" />
+          </div>
 
-          <div className="w-full max-w-sm relative z-10">
+          <div className="w-full max-w-sm min-w-0 relative z-10">
             {/* Mobile logo */}
             <div className="lg:hidden text-center mb-8">
               <Link href="/" className="text-2xl font-display font-bold text-primary cursor-pointer">ÑAMI</Link>

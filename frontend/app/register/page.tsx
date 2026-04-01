@@ -38,10 +38,10 @@ export default function RegisterPage() {
       const res = await api.post('/api/auth/register', payload);
       if (res.success) {
         localStorage.setItem('token', res.data.token);
-        router.push('/dashboard');
+        router.push('/dashboard/bienvenida');
       }
-    } catch (err: any) {
-      setError(err.message || 'Error al registrarse');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al registrarse');
     } finally {
       setLoading(false);
     }

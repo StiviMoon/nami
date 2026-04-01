@@ -1,7 +1,7 @@
 'use client';
 
 import { useMyRestaurant } from '@/hooks/useMyRestaurant';
-import { UtensilsCrossed, Eye, QrCode, Star, FolderOpen, ChefHat, CircleDot, Link2 } from 'lucide-react';
+import { UtensilsCrossed, Eye, QrCode, Star, FolderOpen, ChefHat, CircleDot, Link2, Crown } from 'lucide-react';
 import Link from 'next/link';
 import { PageTransition, StaggerContainer, StaggerItem, AnimatedNumber, FadeIn } from '@/components/motion';
 import { motion } from 'framer-motion';
@@ -24,7 +24,7 @@ export default function DashboardPage() {
     );
   }
 
-  const totalItems = restaurant?.categories?.reduce((sum: number, c: any) => sum + c.items.length, 0) || 0;
+  const totalItems = restaurant?.categories?.reduce((sum: number, c: { items: unknown[] }) => sum + c.items.length, 0) || 0;
   const totalCategories = restaurant?.categories?.length || 0;
 
   // Profile completeness
@@ -157,6 +157,28 @@ export default function DashboardPage() {
                     Ver
                   </Button>
                 </div>
+              </div>
+            </div>
+          </FadeIn>
+        )}
+
+        {restaurant?.plan === 'GRATIS' && (
+          <FadeIn>
+            <div className="bg-n-900 rounded-2xl p-6 border border-n-800 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-primary font-bold mb-2">Upgrade recomendado</p>
+                  <h3 className="text-xl font-display font-bold mb-1">Sube a Pro y aparece primero en el feed</h3>
+                  <p className="text-sm text-n-300">
+                    Desbloquea menu ilimitado, QR descargable y prioridad en resultados.
+                  </p>
+                </div>
+                <Crown className="w-8 h-8 text-primary shrink-0" />
+              </div>
+              <div className="mt-4">
+                <Link href="/contacto?plan=pro&from=dashboard">
+                  <Button>Hablar con ventas</Button>
+                </Link>
               </div>
             </div>
           </FadeIn>

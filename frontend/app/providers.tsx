@@ -10,7 +10,7 @@ function makeQueryClient() {
       queries: {
         staleTime: 1000 * 60 * 5,      // 5 min — datos frescos sin re-fetch
         gcTime: 1000 * 60 * 10,        // 10 min — mantiene en caché tras unmount
-        retry: (failureCount, error: any) => {
+        retry: (failureCount, error: Error) => {
           // No reintentar en errores de cliente (4xx)
           if (error?.message && /4\d\d/.test(error.message)) return false;
           return failureCount < 2;
