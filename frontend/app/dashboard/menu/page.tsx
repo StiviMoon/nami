@@ -6,7 +6,7 @@ import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal } from 'lucide-react';
+import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal, Upload } from 'lucide-react';
 import { normalizeMenuCustomization } from '@/lib/menu-customization';
 import { compressImage } from '@/lib/image-compress';
 import { Button } from '@/components/ui/button';
@@ -204,6 +204,7 @@ export default function MenuPage() {
       if (!uploadRes.ok) throw new Error('Error subiendo imagen');
 
       setItemForm((prev) => ({ ...prev, imageUrl: publicUrl }));
+      setImageFile(null);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : 'No se pudo subir la imagen');
     } finally {
@@ -329,33 +330,47 @@ export default function MenuPage() {
                     />
 
                     {/* Upload imagen */}
-                    <div className="mb-4 rounded-xl border border-dashed border-n-200 p-4 bg-white">
-                      <label className="block text-sm font-semibold mb-1">Imagen del producto</label>
-                      <p className="text-xs text-n-500 mb-3">Selecciona una imagen → pulsa Subir → luego Guardar item</p>
-                      <div className="flex flex-col md:flex-row gap-2 md:items-center">
+                    <div className="mb-4 rounded-xl border border-n-200 p-4 bg-white space-y-3">
+                      <p className="text-sm font-semibold text-n-900">Foto del producto (opcional)</p>
+                      <p className="text-xs text-n-500 rounded-lg bg-n-50 px-3 py-2 border border-n-100">
+                        <strong>Paso 1:</strong> elige la foto · <strong>Paso 2:</strong>{' '}
+                        <strong>Subir a la nube</strong> · <strong>Paso 3:</strong> <strong>Guardar item</strong> (abajo) para crear el plato con esa URL.
+                      </p>
+                      <div className="space-y-2">
                         <input
+                          id={`menu-new-item-img-${cat.id}`}
                           type="file"
                           accept="image/*"
                           onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
-                          className="text-sm"
+                          className="sr-only"
                         />
+                        <label
+                          htmlFor={`menu-new-item-img-${cat.id}`}
+                          className="cursor-pointer flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-n-300 bg-n-50 px-4 py-3 text-sm font-medium text-n-700 hover:border-primary hover:bg-primary/5 transition-colors"
+                        >
+                          <ImagePlus className="w-4 h-4 text-primary shrink-0" />
+                          {imageFile ? imageFile.name : 'Elegir foto del producto'}
+                        </label>
                         <button
                           type="button"
                           onClick={uploadItemImage}
                           disabled={!imageFile || uploadingImage}
-                          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold bg-n-900 text-white hover:bg-n-700 disabled:opacity-50 transition-colors"
+                          className="cursor-pointer w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-n-900 text-white hover:bg-n-700 disabled:opacity-50 transition-colors"
                         >
-                          <ImagePlus className="w-4 h-4" />
-                          {uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+                          <Upload className="w-4 h-4" />
+                          {uploadingImage ? 'Subiendo a la nube...' : 'Subir foto a la nube'}
                         </button>
+                        {!imageFile && (
+                          <p className="text-xs text-n-400">El botón de subir se activa después de elegir un archivo.</p>
+                        )}
                       </div>
                       {itemForm.imageUrl && (
-                        <div className="mt-3 flex items-center gap-3">
-                          <img src={itemForm.imageUrl} alt="Preview" className="w-14 h-14 rounded-lg object-cover border border-n-200" />
-                          <p className="text-xs text-emerald-700 font-medium">Imagen subida correctamente</p>
+                        <div className="mt-2 flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2">
+                          <img src={itemForm.imageUrl} alt="Vista previa" className="w-14 h-14 rounded-lg object-cover border border-n-200" />
+                          <p className="text-xs text-emerald-800 font-medium">Listo en la nube. Ahora pulsa Guardar item.</p>
                         </div>
                       )}
-                      {uploadError && <p className="text-xs text-red-600 mt-2">{uploadError}</p>}
+                      {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
                     </div>
 
                     {/* Badge */}

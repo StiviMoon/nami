@@ -1,6 +1,11 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Segment explorer del DevTools (true por defecto en Next 15.5) puede romper el
+  // bundler en dev con errores tipo "SegmentViewNode" / React Client Manifest (p. ej. con Cursor).
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
   images: {
     remotePatterns: [
       { protocol: 'https', hostname: '**.supabase.co' },

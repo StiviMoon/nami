@@ -35,20 +35,22 @@ export function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
     <motion.div variants={fadeInUp} whileHover={{ y: -4 }} transition={{ duration: 0.22 }}>
       <Link
         href={`/${r.slug}`}
-        className={`cursor-pointer group block bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-all ${
+        className={`cursor-pointer group block bg-white rounded-[2.5rem] overflow-hidden border border-gray-100 shadow-sm hover:shadow-xl transition-shadow ${
           !open ? 'grayscale opacity-70' : ''
         }`}
       >
-        <div className="h-60 relative overflow-hidden">
+        {/* cover + leve scale evita líneas por subpíxeles; si la foto trae bandas negras en el archivo, conviene recortarla al subir */}
+        <div className="relative w-full aspect-4/3 overflow-hidden bg-stone-200">
           {r.coverUrl || r.logoUrl ? (
             <img
               src={r.coverUrl || r.logoUrl}
               alt={r.name}
               loading="lazy"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              decoding="async"
+              className="absolute inset-0 size-full object-cover object-center select-none will-change-transform scale-[1.03] transition-transform duration-700 ease-out group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div className="absolute inset-0 flex items-center justify-center bg-linear-to-br from-stone-100 to-stone-200">
               <span className="text-6xl opacity-25 select-none">🍽</span>
             </div>
           )}
@@ -73,7 +75,7 @@ export function RestaurantCard({ restaurant: r }: { restaurant: Restaurant }) {
             {r.category}
           </span>
           <div className="flex items-start justify-between gap-2 mt-2">
-            <h3 className="text-2xl font-black leading-none text-gray-900 group-hover:text-[#E85D04] transition-colors">
+            <h3 className="text-2xl font-black leading-none text-gray-900 transition-colors group-hover:text-[#E85D04]">
               {r.name}
             </h3>
             {r.distance != null && (

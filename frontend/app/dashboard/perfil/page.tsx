@@ -13,7 +13,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { PageTransition, FadeIn, StaggerContainer, StaggerItem } from '@/components/motion';
 import {
   Save, ImagePlus, MapPin, Palette, Type, LayoutGrid, LayoutList,
-  Instagram, Globe, Clock, MessageCircle, Store,
+  Instagram, Globe, Clock, MessageCircle, Store, Upload, CheckCircle2,
 } from 'lucide-react';
 import { compressImage } from '@/lib/image-compress';
 
@@ -92,10 +92,28 @@ function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: 
   );
 }
 
+async function uploadFileToStorage(file: File): Promise<string> {
+  const compressed = await compressImage(file);
+  const sign = await api.post('/api/dashboard/upload-url', { filename: compressed.name });
+  const signedUrl = sign?.data?.signedUrl as string | undefined;
+  const publicUrl = sign?.data?.publicUrl as string | undefined;
+  if (!signedUrl || !publicUrl) throw new Error('No se pudo obtener URL de subida');
+
+  const uploadRes = await fetch(signedUrl, {
+    method: 'PUT',
+    headers: { 'Content-Type': compressed.type || 'application/octet-stream' },
+    body: compressed,
+  });
+  if (!uploadRes.ok) throw new Error('Error subiendo imagen');
+  return publicUrl;
+}
+
 export default function PerfilPage() {
   const qc = useQueryClient();
   const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [coverFile, setCoverFile] = useState<File | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingCover, setUploadingCover] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [schedule, setSchedule] = useState<Schedule>(() => parseSchedule(null));
 
@@ -174,33 +192,35 @@ export default function PerfilPage() {
     update.mutate(payload);
   };
 
-  const uploadImage = async () => {
-    const file = logoFile;
-    if (!file) return;
-
+  const uploadLogo = async () => {
+    if (!logoFile) return;
     setUploadingLogo(true);
-
     try {
-      const compressed = await compressImage(file);
-      const sign = await api.post('/api/dashboard/upload-url', { filename: compressed.name });
-      const signedUrl = sign?.data?.signedUrl;
-      const publicUrl = sign?.data?.publicUrl;
-      if (!signedUrl || !publicUrl) throw new Error('No se pudo obtener URL de subida');
-
-      const uploadRes = await fetch(signedUrl, {
-        method: 'PUT',
-        headers: { 'Content-Type': compressed.type || 'application/octet-stream' },
-        body: compressed,
-      });
-      if (!uploadRes.ok) throw new Error('Error subiendo imagen');
-
+      const publicUrl = await uploadFileToStorage(logoFile);
       setForm((prev) => ({ ...prev, logoUrl: publicUrl }));
-      toast('Logo subido', 'success');
+      setLogoFile(null);
+      toast('Logo subido a la nube', 'success');
     } catch (error: unknown) {
       const msg = error instanceof Error ? error.message : 'No se pudo subir la imagen';
       toast(msg, 'error');
     } finally {
       setUploadingLogo(false);
+    }
+  };
+
+  const uploadCover = async () => {
+    if (!coverFile) return;
+    setUploadingCover(true);
+    try {
+      const publicUrl = await uploadFileToStorage(coverFile);
+      setForm((prev) => ({ ...prev, coverUrl: publicUrl }));
+      setCoverFile(null);
+      toast('Foto de portada subida a la nube', 'success');
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'No se pudo subir la imagen';
+      toast(msg, 'error');
+    } finally {
+      setUploadingCover(false);
     }
   };
 
@@ -299,37 +319,155 @@ export default function PerfilPage() {
 
             {/* === IMÁGENES === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
-                <SectionHeader icon={ImagePlus} title="Imágenes" />
-                <div className="rounded-xl border border-dashed border-n-200 p-4 bg-n-50">
-                  <p className="text-sm font-semibold mb-3">Logo del restaurante</p>
-                  {form.logoUrl && (
-                    <img src={form.logoUrl} alt="Logo" className="w-20 h-20 rounded-2xl object-cover border-2 border-n-100 mb-3" />
+              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-6">
+                <SectionHeader icon={ImagePlus} title="Imágenes del restaurante" />
+                <p className="text-sm text-n-600 rounded-xl bg-primary/5 border border-primary/15 px-4 py-3">
+                  <strong className="text-n-800">Cómo funciona:</strong> primero eliges el archivo en tu teléfono o PC,
+                  luego pulsas <strong>Subir a la nube</strong> (eso guarda la imagen en el almacenamiento).
+                  Al final, <strong>Guardar cambios</strong> (abajo) envía todo el perfil, incluidas las URLs nuevas, al servidor.
+                </p>
+
+                {/* Logo */}
+                <div className="rounded-2xl border border-n-200 p-4 sm:p-5 space-y-4 bg-n-50/80">
+                  <div>
+                    <p className="text-base font-semibold text-n-900">Logo</p>
+                    <p className="text-xs text-n-500 mt-1">
+                      Cuadrado o casi cuadrado. Se usa en el menú público y como respaldo si no hay foto de portada.
+                      Recomendado: <strong>mín. 400×400 px</strong>, sin bordes negros alrededor (recorta antes si hace falta).
+                    </p>
+                  </div>
+                  {form.logoUrl ? (
+                    <div className="flex items-center gap-3">
+                      <img src={form.logoUrl} alt="Logo actual" className="w-20 h-20 rounded-2xl object-cover border-2 border-white shadow-sm" />
+                      <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        Hay un logo cargado (puedes reemplazarlo)
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">Aún no hay logo.</p>
                   )}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                    className="text-sm mb-2 w-full"
-                  />
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    size="sm"
-                    onClick={uploadImage}
-                    disabled={!logoFile || uploadingLogo}
-                    isLoading={uploadingLogo}
-                  >
-                    <ImagePlus className="w-4 h-4" />
-                    Subir logo
-                  </Button>
+                  <ol className="space-y-3 text-sm">
+                    <li className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="shrink-0 font-bold text-primary w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs">1</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-n-800">Elegir archivo</p>
+                        <input
+                          id="perfil-logo-file"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor="perfil-logo-file"
+                          className="cursor-pointer mt-1 inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-n-300 bg-white px-4 py-3 text-sm font-medium text-n-700 hover:border-primary hover:bg-primary/5 transition-colors w-full sm:w-auto justify-center"
+                        >
+                          <ImagePlus className="w-4 h-4 text-primary" />
+                          {logoFile ? logoFile.name : 'Toca para elegir imagen del logo'}
+                        </label>
+                      </div>
+                    </li>
+                    <li className="flex flex-col sm:flex-row sm:items-start gap-2">
+                      <span className="shrink-0 font-bold text-primary w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs">2</span>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <p className="font-medium text-n-800">Subir a la nube (solo la imagen)</p>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={uploadLogo}
+                          disabled={!logoFile || uploadingLogo}
+                          isLoading={uploadingLogo}
+                          className="w-full sm:w-auto"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Subir logo a la nube
+                        </Button>
+                        {!logoFile && (
+                          <p className="text-xs text-n-400">Este botón se activa cuando ya elegiste un archivo en el paso 1.</p>
+                        )}
+                      </div>
+                    </li>
+                  </ol>
                 </div>
+
+                {/* Portada / feed */}
+                <div className="rounded-2xl border border-n-200 p-4 sm:p-5 space-y-4 bg-n-50/80">
+                  <div>
+                    <p className="text-base font-semibold text-n-900">Foto de portada (feed)</p>
+                    <p className="text-xs text-n-500 mt-1">
+                      Es la imagen grande que sale en el <strong>feed</strong>. Mejor <strong>horizontal</strong> (tipo 4:3 o 16:9),
+                      bien iluminada. Si subes una foto con franjas negras arriba/abajo o a los lados, se verán en la tarjeta:
+                      conviene recortar la foto antes de subirla.
+                    </p>
+                  </div>
+                  {form.coverUrl ? (
+                    <div className="space-y-2">
+                      <div className="relative w-full max-w-md aspect-4/3 rounded-xl overflow-hidden border-2 border-white shadow-sm bg-n-200">
+                        <img src={form.coverUrl} alt="Portada actual" className="absolute inset-0 size-full object-cover object-center" />
+                      </div>
+                      <span className="text-xs text-emerald-700 font-medium flex items-center gap-1">
+                        <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        Hay portada cargada (puedes reemplazarla)
+                      </span>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                      Sin portada: en el feed se usará el logo ampliado, que a veces se ve con bandas. Sube una foto horizontal aquí.
+                    </p>
+                  )}
+                  <ol className="space-y-3 text-sm">
+                    <li className="flex flex-col sm:flex-row sm:items-center gap-2">
+                      <span className="shrink-0 font-bold text-primary w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs">1</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-n-800">Elegir archivo</p>
+                        <input
+                          id="perfil-cover-file"
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setCoverFile(e.target.files?.[0] || null)}
+                          className="sr-only"
+                        />
+                        <label
+                          htmlFor="perfil-cover-file"
+                          className="cursor-pointer mt-1 inline-flex items-center gap-2 rounded-xl border-2 border-dashed border-n-300 bg-white px-4 py-3 text-sm font-medium text-n-700 hover:border-primary hover:bg-primary/5 transition-colors w-full sm:w-auto justify-center"
+                        >
+                          <ImagePlus className="w-4 h-4 text-primary" />
+                          {coverFile ? coverFile.name : 'Toca para elegir foto de portada'}
+                        </label>
+                      </div>
+                    </li>
+                    <li className="flex flex-col sm:flex-row sm:items-start gap-2">
+                      <span className="shrink-0 font-bold text-primary w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center text-xs">2</span>
+                      <div className="flex-1 min-w-0 space-y-2">
+                        <p className="font-medium text-n-800">Subir a la nube (solo la imagen)</p>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={uploadCover}
+                          disabled={!coverFile || uploadingCover}
+                          isLoading={uploadingCover}
+                          className="w-full sm:w-auto"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Subir portada a la nube
+                        </Button>
+                        {!coverFile && (
+                          <p className="text-xs text-n-400">Este botón se activa cuando ya elegiste un archivo en el paso 1.</p>
+                        )}
+                      </div>
+                    </li>
+                  </ol>
+                </div>
+
                 <Input
                   label="Texto del banner"
                   value={form.bannerText}
                   onChange={(e) => setForm({ ...form, bannerText: e.target.value })}
                   placeholder="Ej: ¡Los mejores tacos de Yumbo!"
-                  hint="Se muestra sobre el color del banner"
+                  hint="Se muestra sobre el color del banner en tu página pública"
                 />
               </div>
             </StaggerItem>
