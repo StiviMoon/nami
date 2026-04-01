@@ -17,7 +17,7 @@ const fade = {
 
 export function Hero() {
   return (
-    <section className="relative min-h-screen flex items-center overflow-hidden">
+    <section className="relative min-h-[100dvh] min-h-screen flex items-center overflow-hidden">
       {/* Background glows */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute -top-32 right-0 w-[500px] h-[500px] rounded-full bg-primary/[0.07] blur-[100px]" />
@@ -34,8 +34,8 @@ export function Hero() {
         }}
       />
 
-      <div className="relative max-w-6xl mx-auto px-5 md:px-8 pt-28 pb-16 md:pt-36 md:pb-24 w-full">
-        <div className="grid lg:grid-cols-2 gap-16 lg:gap-20 items-center">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-5 md:px-6 lg:px-8 pt-24 pb-12 sm:pt-28 sm:pb-14 md:pt-32 md:pb-16 lg:pt-36 lg:pb-24 w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 md:gap-12 lg:gap-16 xl:gap-20 items-center">
           {/* Left: Copy */}
           <div>
             <motion.div
@@ -56,10 +56,10 @@ export function Hero() {
               variants={fade}
               initial="hidden"
               animate="show"
-              className="font-display font-bold text-[2.6rem] leading-[1.08] md:text-[3.8rem] md:leading-[1.05] tracking-tight text-n-900"
+              className="font-display font-bold text-[2.25rem] leading-[1.1] sm:text-[2.65rem] sm:leading-[1.08] md:text-[3rem] md:leading-[1.06] lg:text-[3.25rem] xl:text-[3.65rem] xl:leading-[1.05] tracking-tight text-n-900"
             >
               Que te{' '}
-              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
                 encuentren
               </span>{' '}
               y pidan directo por WhatsApp
@@ -70,7 +70,7 @@ export function Hero() {
               variants={fade}
               initial="hidden"
               animate="show"
-              className="mt-6 text-lg md:text-[1.2rem] text-n-500 leading-relaxed max-w-[480px]"
+              className="mt-5 md:mt-6 text-base sm:text-lg md:text-[1.125rem] lg:text-[1.2rem] text-n-500 leading-relaxed max-w-[34rem] lg:max-w-[480px]"
             >
               ÑAMI no cobra comisión. Los clientes te encuentran, piden por WhatsApp
               y te pagan a ti. Sin intermediarios que se queden con tu ganancia.
@@ -81,7 +81,7 @@ export function Hero() {
               variants={fade}
               initial="hidden"
               animate="show"
-              className="mt-10 flex flex-col sm:flex-row gap-3"
+              className="mt-8 md:mt-10 flex flex-col sm:flex-row gap-3 sm:gap-4"
             >
               <Link
                 href="/feed"
@@ -104,7 +104,7 @@ export function Hero() {
               variants={fade}
               initial="hidden"
               animate="show"
-              className="mt-12 flex items-center gap-8"
+              className="mt-10 md:mt-12 flex flex-wrap items-center gap-6 sm:gap-8"
             >
               {[
                 { num: 50, suffix: '+', label: 'Restaurantes' },
@@ -121,16 +121,28 @@ export function Hero() {
             </motion.div>
           </div>
 
-          {/* Right: Phone mockup */}
+          {/* Right: Phone mockup — escritorio / Mac 14"+ */}
           <motion.div
             initial={{ opacity: 0, y: 30, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             transition={{ duration: 0.9, delay: 0.5, ease: [0.22, 1, 0.36, 1] }}
-            className="relative hidden lg:flex items-center justify-center"
+            className="relative hidden lg:flex items-center justify-center xl:justify-end"
           >
             <PhoneMockup />
           </motion.div>
         </div>
+
+        {/* Tablet: mockup centrado debajo del copy (768px–1023px) */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.7, delay: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="flex justify-center mt-10 md:mt-12 lg:hidden px-2"
+        >
+          <div className="scale-[0.82] sm:scale-90 md:scale-[0.92] origin-top">
+            <PhoneMockup />
+          </div>
+        </motion.div>
       </div>
     </section>
   );

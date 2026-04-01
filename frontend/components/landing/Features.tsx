@@ -59,28 +59,28 @@ export function Features() {
   return (
     <>
       {/* How it works */}
-      <section id="features" className="py-24 px-4 bg-n-50">
+      <section id="features" className="py-16 sm:py-20 md:py-24 px-4 sm:px-5 md:px-6 bg-n-50">
         <div className="max-w-6xl mx-auto">
-          <StaggerContainer className="text-center mb-16">
+          <StaggerContainer className="text-center mb-10 md:mb-14 lg:mb-16">
             <StaggerItem>
               <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3">Cómo funciona</span>
-              <h2 className="text-4xl md:text-5xl font-display font-bold">Tres pasos, tu pedido listo</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight px-2">Tres pasos, tu pedido listo</h2>
             </StaggerItem>
             <StaggerItem>
-              <p className="text-n-500 max-w-xl mx-auto mt-4 text-lg">Sin registros, sin apps, sin complicaciones</p>
+              <p className="text-n-500 max-w-xl mx-auto mt-3 md:mt-4 text-base md:text-lg px-2">Sin registros, sin apps, sin complicaciones</p>
             </StaggerItem>
           </StaggerContainer>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-6 relative">
-            {/* Connector line */}
-            <div className="hidden md:block absolute top-12 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-gradient-to-r from-orange-200 via-purple-200 to-emerald-200 z-0" />
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 relative">
+            {/* Connector line — solo 3 columnas */}
+            <div className="hidden lg:block absolute top-12 left-[calc(16.67%+2rem)] right-[calc(16.67%+2rem)] h-px bg-linear-to-r from-orange-200 via-purple-200 to-emerald-200 z-0" />
 
             {howItWorks.map((f, i) => (
               <StaggerItem key={i}>
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
-                  className={`bg-white rounded-3xl p-7 border ${f.border} h-full relative z-10`}
+                  className={`bg-white rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-7 border ${f.border} h-full relative z-10`}
                 >
                   <div className="flex items-start gap-4 mb-5">
                     <div className={`w-12 h-12 rounded-2xl ${f.color} flex items-center justify-center shrink-0`}>
@@ -98,25 +98,29 @@ export function Features() {
       </section>
 
       {/* For restaurants */}
-      <section className="py-24 px-4">
+      <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-5 md:px-6">
         <div className="max-w-6xl mx-auto">
-          <StaggerContainer className="text-center mb-16">
+          <StaggerContainer className="text-center mb-10 md:mb-14 lg:mb-16">
             <StaggerItem>
               <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3">Para negocios</span>
-              <h2 className="text-4xl md:text-5xl font-display font-bold">Tu restaurante en digital,<br />en minutos</h2>
+              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold tracking-tight px-2">
+                Tu restaurante en digital,
+                <br />
+                en minutos
+              </h2>
             </StaggerItem>
             <StaggerItem>
-              <p className="text-n-500 max-w-xl mx-auto mt-4 text-lg">Todo lo que necesitas para digitalizar tu negocio hoy</p>
+              <p className="text-n-500 max-w-xl mx-auto mt-3 md:mt-4 text-base md:text-lg px-2">Todo lo que necesitas para digitalizar tu negocio hoy</p>
             </StaggerItem>
           </StaggerContainer>
 
-          <StaggerContainer className="grid md:grid-cols-3 gap-6">
+          <StaggerContainer className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6">
             {forRestaurants.map((f, i) => (
               <StaggerItem key={i}>
                 <motion.div
                   whileHover={{ y: -4 }}
                   transition={{ duration: 0.2 }}
-                  className={`${f.bg} rounded-3xl p-7 h-full`}
+                  className={`${f.bg} rounded-2xl md:rounded-3xl p-5 sm:p-6 md:p-7 h-full`}
                 >
                   <div className={`w-12 h-12 rounded-2xl ${f.iconBg} flex items-center justify-center mb-5`}>
                     <f.icon className="w-6 h-6" />

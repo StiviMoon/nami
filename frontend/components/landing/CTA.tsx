@@ -6,7 +6,7 @@ import { StaggerContainer, StaggerItem } from '@/components/motion';
 
 export function CTA() {
   return (
-    <section className="py-24 px-4 relative overflow-hidden">
+    <section className="py-16 sm:py-20 md:py-24 px-4 sm:px-5 md:px-6 lg:px-8 relative overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-n-900 -z-10" />
       <div className="absolute inset-0 -z-10"
@@ -26,15 +26,17 @@ export function CTA() {
         }}
       />
 
-      <StaggerContainer className="max-w-3xl mx-auto text-center text-white relative z-10">
+      <StaggerContainer className="max-w-3xl mx-auto text-center text-white relative z-10 px-1">
         <StaggerItem>
-          <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-4">Únete hoy</span>
-          <h2 className="text-4xl md:text-5xl font-display font-bold mb-6 leading-tight">
-            ¿Listo para descubrir<br />lo mejor de Yumbo?
+          <span className="inline-block text-xs font-bold uppercase tracking-widest text-primary mb-3 md:mb-4">Únete hoy</span>
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-display font-bold mb-5 md:mb-6 leading-[1.15] tracking-tight">
+            ¿Listo para descubrir
+            <br />
+            lo mejor de Yumbo?
           </h2>
         </StaggerItem>
         <StaggerItem>
-          <p className="text-lg text-n-400 mb-10 max-w-xl mx-auto leading-relaxed">
+          <p className="text-base md:text-lg text-n-400 mb-8 md:mb-10 max-w-xl mx-auto leading-relaxed px-1">
             Explora restaurantes cerca de ti o registra tu negocio y llega a más clientes hoy mismo.
           </p>
         </StaggerItem>

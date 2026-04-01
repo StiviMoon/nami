@@ -33,7 +33,7 @@ export function Navbar() {
         initial={{ y: -20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden md:flex items-center gap-4 px-3 py-2 rounded-full transition-all duration-500 ${
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 hidden lg:flex items-center gap-2 xl:gap-4 px-2 xl:px-3 py-2 rounded-full transition-all duration-500 max-w-[min(100vw-1.5rem,56rem)] ${
           scrolled
             ? 'bg-white/90 backdrop-blur-2xl shadow-[0_4px_24px_rgba(0,0,0,0.06)] border border-n-200/60'
             : 'bg-white/60 backdrop-blur-xl border border-n-200/40'
@@ -42,7 +42,7 @@ export function Navbar() {
         {/* Logo */}
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className="cursor-pointer px-4 py-2.5 font-display font-bold text-base tracking-tight text-n-900 rounded-full hover:bg-n-100/50 transition-colors duration-300 active:scale-[0.98]"
+          className="cursor-pointer px-3 xl:px-4 py-2.5 font-display font-bold text-sm xl:text-base tracking-tight text-n-900 rounded-full hover:bg-n-100/50 transition-colors duration-300 active:scale-[0.98] shrink-0"
         >
           <span className="text-primary">Ñ</span>AMI
         </button>
@@ -53,7 +53,7 @@ export function Navbar() {
           <button
             key={l.href}
             onClick={() => go(l.href)}
-            className="cursor-pointer px-5 py-2.5 text-[13px] font-medium text-n-500 hover:text-n-900 rounded-full hover:bg-n-100/60 transition-all duration-300 active:scale-[0.98]"
+            className="cursor-pointer px-3 xl:px-5 py-2.5 text-[12px] xl:text-[13px] font-medium text-n-500 hover:text-n-900 rounded-full hover:bg-n-100/60 transition-all duration-300 active:scale-[0.98] shrink-0"
           >
             {l.label}
           </button>
@@ -63,14 +63,14 @@ export function Navbar() {
 
         <Link
           href="/login"
-          className="cursor-pointer px-5 py-2.5 text-[13px] font-medium text-n-500 hover:text-n-900 rounded-full hover:bg-n-100/60 transition-all duration-300 active:scale-[0.98]"
+          className="cursor-pointer px-3 xl:px-5 py-2.5 text-[12px] xl:text-[13px] font-medium text-n-500 hover:text-n-900 rounded-full hover:bg-n-100/60 transition-all duration-300 active:scale-[0.98] shrink-0"
         >
           Acceder
         </Link>
 
         <Link
           href="/feed"
-          className="cursor-pointer px-6 py-2.5 text-[13px] font-semibold text-white bg-primary hover:bg-primary-dark rounded-full transition-all duration-300 hover:shadow-[0_4px_20px_rgba(255,122,0,0.35)] active:scale-[0.98]"
+          className="cursor-pointer px-4 xl:px-6 py-2.5 text-[12px] xl:text-[13px] font-semibold text-white bg-primary hover:bg-primary-dark rounded-full transition-all duration-300 hover:shadow-[0_4px_20px_rgba(255,122,0,0.35)] active:scale-[0.98] shrink-0 whitespace-nowrap"
         >
           Ver restaurantes
         </Link>
@@ -81,7 +81,7 @@ export function Navbar() {
         initial={{ y: -12, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-        className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 md:hidden flex items-center gap-3 px-3 py-1.5 rounded-full transition-all duration-500 max-w-[calc(100vw-2rem)] ${
+        className={`fixed top-3 left-1/2 -translate-x-1/2 z-50 lg:hidden flex items-center gap-3 px-3 py-1.5 rounded-full transition-all duration-500 max-w-[calc(100vw-2rem)] ${
           scrolled
             ? 'bg-white/90 backdrop-blur-2xl shadow-[0_2px_16px_rgba(0,0,0,0.08)] border border-n-200/60'
             : 'bg-white/60 backdrop-blur-xl border border-n-200/40'
@@ -123,7 +123,7 @@ export function Navbar() {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] md:hidden cursor-pointer"
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-[2px] lg:hidden cursor-pointer"
               onClick={() => setOpen(false)}
               aria-label="Cerrar menú"
             />
@@ -132,7 +132,7 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.96 }}
               transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-              className="fixed left-1/2 -translate-x-1/2 top-14 z-50 w-[min(calc(100vw-2rem),248px)] md:hidden rounded-2xl overflow-hidden bg-white/95 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-n-200/60 py-2 px-3"
+              className="fixed left-1/2 -translate-x-1/2 top-14 z-50 w-[min(calc(100vw-2rem),280px)] lg:hidden rounded-2xl overflow-hidden bg-white/95 backdrop-blur-2xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-n-200/60 py-2 px-3"
             >
               {links.map((l) => (
                 <button

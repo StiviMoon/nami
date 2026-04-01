@@ -74,9 +74,9 @@ const plans: Plan[] = [
 
 export function Plans() {
   return (
-    <section id="planes" className="py-24 md:py-32 relative">
+    <section id="planes" className="py-16 sm:py-20 md:py-28 lg:py-32 relative">
       <div className="absolute inset-0 bg-n-50/50 pointer-events-none" />
-      <div className="relative max-w-6xl mx-auto px-5 md:px-8">
+      <div className="relative max-w-6xl mx-auto px-4 sm:px-5 md:px-6 lg:px-8">
         <motion.p
           initial={{ opacity: 0, y: 10 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -92,10 +92,10 @@ export function Plans() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, delay: 0.05 }}
-          className="font-display font-bold text-3xl md:text-[2.6rem] leading-[1.1] tracking-tight text-center text-n-900 mb-5"
+          className="font-display font-bold text-3xl sm:text-4xl md:text-[2.35rem] lg:text-[2.6rem] leading-[1.12] tracking-tight text-center text-n-900 mb-4 md:mb-5 px-2"
         >
           Sin{' '}
-          <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+          <span className="bg-linear-to-r from-primary to-accent bg-clip-text text-transparent">
             letra chiquita
           </span>
         </motion.h2>
@@ -105,12 +105,12 @@ export function Plans() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-center text-n-400 max-w-md mx-auto mb-14 text-[15px]"
+          className="text-center text-n-400 max-w-md mx-auto mb-10 md:mb-12 lg:mb-14 text-sm md:text-[15px] px-2"
         >
           Comienza gratis y escala cuando tu negocio lo pida. Precios en COP.
         </motion.p>
 
-        <div className="grid md:grid-cols-3 gap-4 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-5 items-stretch max-w-5xl xl:max-w-none mx-auto">
           {plans.map((plan, i) => {
             const isHighlight = plan.style === 'highlight';
             const isDark = plan.style === 'dark';
@@ -122,9 +122,9 @@ export function Plans() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: '-50px' }}
                 transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                className={`relative rounded-[1.4rem] p-7 flex flex-col border transition-all duration-300 ${
+                className={`relative rounded-[1.25rem] md:rounded-[1.4rem] p-5 sm:p-6 md:p-7 flex flex-col border transition-all duration-300 ${
                   isHighlight
-                    ? 'bg-gradient-to-br from-primary to-primary-dark border-primary/30 shadow-[0_12px_40px_-8px_rgba(255,122,0,0.3)] md:scale-[1.03] z-10'
+                    ? 'bg-linear-to-br from-primary to-primary-dark border-primary/30 shadow-[0_12px_40px_-8px_rgba(255,122,0,0.3)] xl:scale-[1.03] z-10'
                     : isDark
                     ? 'bg-n-900 border-n-700/40'
                     : 'bg-white border-n-200/60 hover:border-primary/30 hover:shadow-[0_8px_40px_-12px_rgba(255,122,0,0.10)]'

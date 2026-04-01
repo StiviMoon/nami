@@ -14,9 +14,9 @@ const links = {
 
 export function Footer() {
   return (
-    <footer className="bg-n-900 text-n-400 pt-16 pb-10 px-4">
+    <footer className="bg-n-900 text-n-400 pt-12 sm:pt-14 md:pt-16 pb-8 sm:pb-10 px-4 sm:px-5 md:px-6 lg:px-8">
       <div className="max-w-6xl mx-auto">
-        <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 mb-10 md:mb-12">
           {/* Brand */}
           <div>
             <Link href="/" className="font-display font-bold text-white text-2xl">ÑAMI</Link>
