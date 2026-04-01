@@ -156,7 +156,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
                 value={deliveryAddress}
                 onChange={(e) => setDeliveryAddress(e.target.value)}
                 placeholder="Ej: Cra 4 #45-23, apto 201"
-                className="w-full border border-n-200 rounded-xl px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-xl border border-n-200 bg-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 sm:text-sm"
               />
             </div>
             <div>
@@ -165,7 +165,7 @@ export function CartDrawer({ open, onClose, restaurantSlug, themeAccent, themeAc
                 value={deliveryPhone}
                 onChange={(e) => setDeliveryPhone(e.target.value)}
                 placeholder="Ej: +573001112233"
-                className="w-full border border-n-200 rounded-xl px-3 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
+                className="w-full rounded-xl border border-n-200 bg-white px-3 py-2.5 text-base focus:outline-none focus:ring-2 focus:ring-primary/30 sm:text-sm"
               />
             </div>
           </div>

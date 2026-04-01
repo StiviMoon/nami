@@ -46,14 +46,14 @@ export function CustomizationModal({ item, isOpen, onClose, onConfirm }: Props) 
 
   return (
     <div className="fixed inset-0 z-[110] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-0 sm:p-4">
-      <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col max-h-[90vh] overflow-hidden shadow-2xl">
+      <div className="flex max-h-[min(92dvh,100svh)] w-full max-w-lg flex-col overflow-hidden rounded-t-[2.5rem] bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-[2.5rem]">
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
           <h3 className="font-black text-xl text-gray-900">Personaliza tu pedido</h3>
           <button type="button" onClick={onClose} className="p-2 bg-gray-100 rounded-full cursor-pointer">
             <X size={20} />
           </button>
         </div>
-        <div className="p-8 overflow-y-auto space-y-8">
+        <div className="min-h-0 flex-1 space-y-8 overflow-y-auto overscroll-y-contain p-6 sm:p-8">
           <p className="text-sm text-gray-500 font-medium">{item.name}</p>
           {(item.extras?.length ?? 0) > 0 && (
             <section>
@@ -103,7 +103,7 @@ export function CustomizationModal({ item, isOpen, onClose, onConfirm }: Props) 
             </section>
           )}
         </div>
-        <div className="p-6 bg-gray-50 border-t border-gray-100">
+        <div className="border-t border-gray-100 bg-gray-50 p-6 pb-[max(1.5rem,var(--safe-bottom))] sm:pb-6">
           <button
             type="button"
             onClick={() => {

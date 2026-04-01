@@ -8,6 +8,10 @@ import { formatPrice } from '@/lib/utils';
 
 const ACCENT = '#E85D04';
 
+/** iOS Safari hace zoom al enfocar si el texto del campo es menor de 16px; en sm+ volvemos a tamaño compacto */
+const checkoutFieldClass =
+  'w-full p-4 bg-gray-50 rounded-2xl text-base sm:text-sm outline-none focus:ring-2 focus:ring-orange-100';
+
 type Step = 'review' | 'checkout' | 'summary' | 'success';
 
 type Props = {
@@ -97,9 +101,14 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
 
   return (
     <div className="fixed inset-0 z-[120] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-md p-0 sm:p-4">
-      <div className="bg-white w-full max-w-lg rounded-t-[2.5rem] sm:rounded-[2.5rem] flex flex-col max-h-[90vh] overflow-hidden">
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0">
-          <h3 className="font-black text-xl text-gray-900">
+      <div
+        className="bg-white flex w-full max-w-lg flex-col overflow-hidden rounded-t-[2.5rem] sm:rounded-[2.5rem] max-h-[min(92dvh,100svh)] sm:max-h-[90vh]"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-modal-title"
+      >
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-100 bg-white p-6">
+          <h3 id="cart-modal-title" className="font-black text-xl text-gray-900">
             {step === 'review'
               ? 'Tu carrito'
               : step === 'checkout'
@@ -112,7 +121,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
             <X size={20} />
           </button>
         </div>
-        <div className="flex-1 overflow-y-auto p-6 sm:p-8">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-6 sm:p-8">
           {step === 'review' && (
             <div className="space-y-4">
               {cart.items.map((item) => (
@@ -165,7 +174,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                 <button
                   type="button"
                   onClick={() => setDeliveryType('domicilio')}
-                  className={`flex-1 py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex min-h-12 flex-1 touch-manipulation items-center justify-center gap-2 rounded-xl py-3 text-xs font-black cursor-pointer ${
                     deliveryType === 'domicilio' ? 'bg-white shadow-sm' : 'text-gray-400'
                   }`}
                   style={deliveryType === 'domicilio' ? { color: ACCENT } : undefined}
@@ -175,7 +184,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                 <button
                   type="button"
                   onClick={() => setDeliveryType('recoger')}
-                  className={`flex-1 py-3 rounded-xl text-xs font-black flex items-center justify-center gap-2 cursor-pointer ${
+                  className={`flex min-h-12 flex-1 touch-manipulation items-center justify-center gap-2 rounded-xl py-3 text-xs font-black cursor-pointer ${
                     deliveryType === 'recoger' ? 'bg-white shadow-sm' : 'text-gray-400'
                   }`}
                   style={deliveryType === 'recoger' ? { color: ACCENT } : undefined}
@@ -190,7 +199,10 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                   value={formData.nombre}
                   onChange={handleInputChange}
                   placeholder="Nombre completo *"
-                  className="w-full p-4 bg-gray-50 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-100"
+                  autoComplete="name"
+                  autoCapitalize="words"
+                  enterKeyHint="next"
+                  className={checkoutFieldClass}
                 />
                 <input
                   type="tel"
@@ -198,7 +210,10 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                   value={formData.telefono}
                   onChange={handleInputChange}
                   placeholder="Teléfono (3xx...) *"
-                  className={`w-full p-4 bg-gray-50 rounded-2xl text-sm outline-none ${
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  enterKeyHint="next"
+                  className={`${checkoutFieldClass} ${
                     formData.telefono && !validatePhone(formData.telefono) ? 'ring-2 ring-red-200' : ''
                   }`}
                 />
@@ -210,7 +225,9 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                       value={formData.direccion}
                       onChange={handleInputChange}
                       placeholder="Dirección exacta *"
-                      className="w-full p-4 bg-gray-50 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-100"
+                      autoComplete="street-address"
+                      enterKeyHint="next"
+                      className={checkoutFieldClass}
                     />
                     <input
                       type="text"
@@ -218,7 +235,9 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                       value={formData.barrio}
                       onChange={handleInputChange}
                       placeholder="Barrio *"
-                      className="w-full p-4 bg-gray-50 rounded-2xl text-sm outline-none focus:ring-2 focus:ring-orange-100"
+                      autoComplete="address-level2"
+                      enterKeyHint="done"
+                      className={checkoutFieldClass}
                     />
                   </>
                 )}
@@ -297,7 +316,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
           )}
         </div>
         {step !== 'success' && (
-          <div className="p-6 bg-gray-50 border-t border-gray-100 flex flex-col gap-3">
+          <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 p-6 pb-[max(1.5rem,var(--safe-bottom))] sm:pb-6">
             <div className="flex justify-between items-center mb-2 px-2">
               <span className="text-[10px] font-black text-gray-400 uppercase">Subtotal</span>
               <span className="text-xl font-black" style={{ color: ACCENT }}>

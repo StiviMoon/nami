@@ -126,7 +126,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
   const shareUrl = typeof window !== 'undefined' ? window.location.href : `/${slug}`;
 
   return (
-    <div className="min-h-screen bg-gray-50 lg:flex font-sans text-gray-900 antialiased">
+    <div className="min-h-dvh bg-gray-50 lg:flex lg:min-h-screen font-sans text-gray-900 antialiased">
       <ClosedStoreModal
         isOpen={closedModalOpen}
         onClose={() => setClosedModalOpen(false)}
@@ -245,11 +245,12 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
           )}
           <Link
             href="/feed"
-            className="absolute top-4 left-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white"
+            className="absolute left-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white top-[max(1rem,var(--safe-top))]"
+            aria-label="Volver al feed"
           >
             <ArrowLeft className="text-white" />
           </Link>
-          <div className="absolute top-4 right-4 flex gap-2">
+          <div className="absolute right-4 flex gap-2 top-[max(1rem,var(--safe-top))]">
             <FavoriteButton restaurantId={restaurant.id} size="sm" />
             <ShareButton url={shareUrl} title={restaurant.name} text={`Mira ${restaurant.name} en ÑAMI`} />
           </div>
@@ -270,13 +271,13 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
             </div>
           )}
         </div>
-        <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-xl py-4 flex gap-2 overflow-x-auto scrollbar-hide px-6 border-b border-gray-100">
+        <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-xl py-3 flex gap-2 overflow-x-auto scrollbar-hide px-4 sm:px-6 border-b border-gray-100 supports-backdrop-filter:bg-gray-50/80">
           {categories.map((cat) => (
             <button
               key={cat.id}
               type="button"
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-6 py-2.5 rounded-full text-[10px] font-black uppercase whitespace-nowrap transition-all cursor-pointer ${
+              className={`min-h-11 shrink-0 px-5 py-2.5 rounded-full text-[11px] font-black uppercase whitespace-nowrap transition-all cursor-pointer active:scale-[0.98] ${
                 activeCategory === cat.id ? 'bg-[#E85D04] text-white' : 'bg-white text-gray-400 border border-gray-100'
               }`}
             >
@@ -286,7 +287,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         </div>
       </div>
 
-      <main className="flex-1 max-w-4xl mx-auto p-6 lg:p-12 pb-32 space-y-6 w-full min-w-0">
+      <main className="flex-1 max-w-4xl mx-auto p-4 sm:p-6 lg:p-12 pb-[calc(8rem+var(--safe-bottom))] lg:pb-32 space-y-5 sm:space-y-6 w-full min-w-0">
         {activeItems.map((item) => {
           const photos = [item.imageUrl].filter(Boolean) as string[];
           const itemBadge = getItemBadge(item.badge);
@@ -333,7 +334,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
                     type="button"
                     disabled={!item.isAvailable}
                     onClick={() => handleAddClick(item)}
-                    className={`px-5 py-2.5 text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-all cursor-pointer ${
+                    className={`min-h-11 min-w-30 px-5 py-2.5 text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
                       !item.isAvailable ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 hover:bg-[#E85D04]'
                     }`}
                   >

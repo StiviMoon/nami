@@ -49,6 +49,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   themeColor: '#FF7A00',
   viewportFit: 'cover',
+  /** Chrome/Android: el teclado redimensiona el layout en lugar de tapar mal los modales */
+  interactiveWidget: 'resizes-content',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

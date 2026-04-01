@@ -53,7 +53,7 @@ export function RestaurantContent({ slug }: { slug: string }) {
 
   if (isLoading) {
     return (
-      <main className="min-h-screen bg-gray-50">
+      <main className="min-h-dvh bg-gray-50">
         <Skeleton className="h-56 w-full rounded-none" />
         <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-10">
           <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-gray-100 space-y-4">
@@ -77,7 +77,7 @@ export function RestaurantContent({ slug }: { slug: string }) {
             Volver al feed
           </Link>
         }
-        className="min-h-screen bg-gray-50"
+        className="min-h-dvh bg-gray-50"
       />
     );
   }
