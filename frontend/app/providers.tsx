@@ -3,6 +3,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ToastContainer } from '@/components/ui/toast';
+import { PwaRegister } from '@/components/pwa-register';
 
 function makeQueryClient() {
   return new QueryClient({
@@ -29,6 +30,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={client}>
+      <PwaRegister />
       {children}
       <ToastContainer />
     </QueryClientProvider>
