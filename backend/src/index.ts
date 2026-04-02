@@ -19,7 +19,13 @@ const PORT = process.env.PORT || 3000;
 const isProd = process.env.NODE_ENV === 'production';
 
 // --- Security ---
-app.use(helmet());
+// Permitir que el front en otro dominio (p. ej. Vercel / ñami.app) lea respuestas fetch();
+// el valor por defecto de Helmet es same-origin y rompe llamadas cross-origin aunque CORS esté bien.
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  }),
+);
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()).filter(Boolean);
 app.use(cors({
