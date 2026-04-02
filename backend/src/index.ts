@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { type Request, type Response } from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
@@ -68,7 +68,7 @@ const uploadLimiter = rateLimit({
 app.use(globalLimiter);
 
 // Health
-app.get('/health', (_req, res) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString(), env: isProd ? 'production' : 'development' });
 });
 
