@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { useMe } from '@/hooks/useRestaurantStatus';
 import { useRealtimeRestaurant } from '@/hooks/useRealtimeRestaurant';
 import { useQueryClient } from '@tanstack/react-query';
+import { clearTokenCookie } from '@/lib/session-cookie';
 
 export default function PendingPage() {
   const router = useRouter();
