@@ -1,10 +1,10 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
-import dotenv from 'dotenv';
-
-dotenv.config({ path: '.env.local' });
 
 import authRouter from './modules/auth/router';
 import restaurantRouter from './modules/restaurants/router';
@@ -18,7 +18,9 @@ const PORT = process.env.PORT || 3000;
 
 app.use(helmet());
 app.use(cors({
-  origin: process.env.ALLOWED_ORIGINS?.split(',') || '*',
+  origin: function (origin, callback) {
+    callback(null, origin || true);
+  },
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
