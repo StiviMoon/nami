@@ -46,6 +46,8 @@ export default function DashboardPage() {
     { label: 'Categorías', value: totalCategories, icon: FolderOpen, color: 'text-blue-500 bg-blue-50' },
     { label: 'Items', value: totalItems, maxValue: restaurant?.plan === 'GRATIS' ? 10 : undefined, icon: ChefHat, color: 'text-primary bg-primary/10' },
     { label: 'Estado', value: restaurant?.isClosed ? 'Cerrado' : 'Abierto', icon: CircleDot, color: restaurant?.isClosed ? 'text-red-500 bg-red-50' : 'text-emerald-500 bg-emerald-50' },
+    { label: 'Visitas', value: restaurant?.pageViews || 0, icon: Eye, color: 'text-violet-500 bg-violet-50' },
+    { label: 'WhatsApp', value: restaurant?.whatsappClicks || 0, icon: Link2, color: 'text-green-500 bg-green-50' },
   ];
 
   return (
@@ -59,7 +61,7 @@ export default function DashboardPage() {
         </FadeIn>
 
         {/* Stats */}
-        <StaggerContainer className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <StaggerContainer className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           {stats.map((stat) => (
             <StaggerItem key={stat.label}>
               <div className="bg-white rounded-2xl p-5 border border-n-100">

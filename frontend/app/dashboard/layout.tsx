@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LayoutDashboard, UtensilsCrossed, User, QrCode, LogOut, ExternalLink } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
+import { api } from '@/lib/api';
 
 const navItems = [
   { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -29,6 +30,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname();
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
+  const [statusChecked, setStatusChecked] = useState(false);
 
   const pageTitle = useMemo(() => pathTitles[pathname] ?? 'Dashboard', [pathname]);
 
@@ -36,9 +38,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const t = localStorage.getItem('token');
     if (!t) {
       router.push('/login');
-    } else {
-      setToken(t);
+      return;
     }
+    setToken(t);
+
+    // Verificar status del restaurante
+    api.get('/api/auth/me').then((res) => {
+      const role = res.data?.user?.role;
+      const status = res.data?.restaurant?.status;
+
+      if (role === 'ADMIN') {
+        router.push('/super-admin');
+      } else if (status && status !== 'ACTIVE') {
+        router.push('/pending');
+      } else {
+        setStatusChecked(true);
+      }
+    }).catch(() => {
+      setStatusChecked(true);
+    });
   }, [router]);
 
   const handleLogout = () => {
@@ -46,7 +64,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     router.push('/login');
   };
 
-  if (!token) return null;
+  if (!token || !statusChecked) return null;
 
   return (
     <div className="h-svh min-h-0 overflow-hidden bg-n-50">

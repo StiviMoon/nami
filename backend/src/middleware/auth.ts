@@ -9,6 +9,7 @@ export interface AuthUser {
   supabaseId: string;
   role: 'OWNER' | 'ADMIN';
   restaurantId?: string;
+  restaurantStatus?: 'PENDING' | 'ACTIVE' | 'REJECTED' | 'SUSPENDED';
 }
 
 declare global {
@@ -37,7 +38,7 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
 
     const dbUser = await prisma.user.findUnique({
       where: { supabaseId: supaUser.id },
-      include: { restaurant: { select: { id: true } } },
+      include: { restaurant: { select: { id: true, status: true } } },
     });
 
     if (!dbUser) {
@@ -50,6 +51,7 @@ export async function authMiddleware(req: Request, _res: Response, next: NextFun
       supabaseId: dbUser.supabaseId,
       role: dbUser.role,
       restaurantId: dbUser.restaurant?.id,
+      restaurantStatus: dbUser.restaurant?.status,
     };
 
     next();

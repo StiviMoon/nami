@@ -36,6 +36,13 @@ enum MenuCardStyle {
   MINIMAL
 }
 
+enum RestaurantStatus {
+  PENDING
+  ACTIVE
+  REJECTED
+  SUSPENDED
+}
+
 // ============================================================================
 // MODELS
 // ============================================================================
@@ -84,8 +91,19 @@ model Restaurant {
   // Horarios (JSON serializado)
   schedule       String?  @db.Text
 
-  isActive    Boolean        @default(true)
-  isClosed    Boolean        @default(false)
+  isActive       Boolean          @default(true)
+  isClosed       Boolean          @default(false)
+
+  // Sistema de aprobación
+  status         RestaurantStatus @default(PENDING)
+  rejectionNote  String?          @db.Text
+  reviewedAt     DateTime?
+  reviewedBy     String?
+
+  // Métricas
+  pageViews      Int              @default(0)
+  whatsappClicks Int              @default(0)
+
   owner       User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   ownerId     String         @unique
   categories  MenuCategory[]
@@ -96,6 +114,7 @@ model Restaurant {
   @@index([category])
   @@index([plan])
   @@index([isActive])
+  @@index([status])
   @@map("restaurants")
 }
 
@@ -134,4 +153,18 @@ model MenuItem {
   @@index([categoryId])
   @@index([isAvailable])
   @@map("menu_items")
+}
+
+model AdminLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String   @db.VarChar(50)
+  targetId   String
+  targetType String   @db.VarChar(30)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([targetId])
+  @@index([adminId])
+  @@map("admin_logs")
 }

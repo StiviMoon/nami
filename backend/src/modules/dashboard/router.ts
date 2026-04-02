@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../../middleware/auth';
+import { requireApproved } from '../../middleware/requireApproved';
 import { prisma } from '../../config/database';
 import { supabaseAdmin } from '../../config/supabase';
 import { ApiError, ForbiddenError, NotFoundError } from '../../utils/errors';
@@ -14,6 +15,7 @@ import {
 
 const router = Router();
 router.use(authMiddleware);
+router.use(requireApproved);
 
 async function ensureBucketExists(bucket: string) {
   const { data: existingBucket } = await supabaseAdmin.storage.getBucket(bucket);

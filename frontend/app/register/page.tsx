@@ -38,7 +38,12 @@ export default function RegisterPage() {
       const res = await api.post('/api/auth/register', payload);
       if (res.success) {
         localStorage.setItem('token', res.data.token);
-        router.push('/dashboard/bienvenida');
+        const status = res.data.restaurant?.status;
+        if (status === 'PENDING') {
+          router.push('/pending');
+        } else {
+          router.push('/dashboard/bienvenida');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al registrarse');

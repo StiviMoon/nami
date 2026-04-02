@@ -31,7 +31,16 @@ export default function LoginPage() {
       const res = await api.post('/api/auth/login', { email, password });
       if (res.success) {
         localStorage.setItem('token', res.data.token);
-        router.push('/dashboard');
+        const role = res.data.user?.role;
+        const status = res.data.restaurant?.status;
+
+        if (role === 'ADMIN') {
+          router.push('/super-admin');
+        } else if (status === 'ACTIVE') {
+          router.push('/dashboard');
+        } else {
+          router.push('/pending');
+        }
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión');

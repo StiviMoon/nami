@@ -4,6 +4,11 @@
  */
 
 export const queryKeys = {
+  // ── Auth ─────────────────────────────────────────────────────────────────
+  auth: {
+    me: ['auth', 'me'] as const,
+  },
+
   // ── Feed público ──────────────────────────────────────────────────────────
   restaurants: {
     all: ['restaurants'] as const,
@@ -21,5 +26,13 @@ export const queryKeys = {
   // ── Dashboard (autenticado) ───────────────────────────────────────────────
   dashboard: {
     restaurant: ['dashboard', 'restaurant'] as const,
+  },
+
+  // ── Super Admin ───────────────────────────────────────────────────────────
+  admin: {
+    metrics: ['admin', 'metrics'] as const,
+    restaurants: (params: Record<string, unknown>) => ['admin', 'restaurants', params] as const,
+    restaurant: (id: string) => ['admin', 'restaurant', id] as const,
+    logs: (params: Record<string, unknown>) => ['admin', 'logs', params] as const,
   },
 } as const;

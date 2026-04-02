@@ -32,6 +32,7 @@ export async function register(input: RegisterInput) {
             whatsapp: input.whatsapp,
             address: input.address,
             category: input.category,
+            status: 'PENDING',
           },
         },
       },

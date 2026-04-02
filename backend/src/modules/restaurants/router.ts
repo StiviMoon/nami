@@ -20,7 +20,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
     const skip = parseInt(offset, 10) || 0;
 
     if (hasGeo) {
-      const conditions: string[] = ['"isActive" = true'];
+      const conditions: string[] = ['"isActive" = true', '"status" = \'ACTIVE\''];
       const params: (string | number)[] = [lat, lng];
       let paramIdx = 3;
 
@@ -75,7 +75,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 
       res.json({ success: true, data: { restaurants: formatted, total: Number(countResult[0].count) } });
     } else {
-      const where: any = { isActive: true };
+      const where: any = { isActive: true, status: 'ACTIVE' };
       if (category && category !== 'all') where.category = category;
       if (search?.trim()) {
         where.OR = [
@@ -111,7 +111,7 @@ router.get('/', async (req: Request, res: Response, next: NextFunction) => {
 router.get('/categories', async (_req: Request, res: Response, next: NextFunction) => {
   try {
     const categories = await prisma.restaurant.findMany({
-      where: { isActive: true },
+      where: { isActive: true, status: 'ACTIVE' },
       select: { category: true },
       distinct: ['category'],
     });
@@ -146,12 +146,35 @@ router.get('/:slug', async (req: Request, res: Response, next: NextFunction) => 
 
     if (!restaurant) throw new NotFoundError('Restaurante');
 
+    // Tracking de visitas (fire-and-forget)
+    prisma.restaurant.update({
+      where: { id: restaurant.id },
+      data: { pageViews: { increment: 1 } },
+    }).catch(() => {});
+
     if (includeMenu) {
       const { categories, ...rest } = restaurant as any;
       res.json({ success: true, data: { restaurant: rest, menu: categories } });
     } else {
       res.json({ success: true, data: restaurant });
     }
+  } catch (err) {
+    next(err);
+  }
+});
+
+// POST /api/restaurants/:slug/track-whatsapp — Tracking de clicks WhatsApp
+router.post('/:slug/track-whatsapp', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const slug = getSingleParam(req.params.slug);
+    if (!slug) throw new ApiError(400, 'Slug inválido');
+
+    await prisma.restaurant.update({
+      where: { slug },
+      data: { whatsappClicks: { increment: 1 } },
+    });
+
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }

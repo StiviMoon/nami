@@ -8,16 +8,24 @@ const securityHeaders: Record<string, string> = {
   'X-DNS-Prefetch-Control': 'on',
 };
 
-/**
- * Aplica cabeceras de seguridad solo a rutas de la app, no a `/_next/*` ni estáticos.
- * Si un chunk falla con 404, Next devuelve `text/plain`; mezclar eso con nosniff en la
- * misma respuesta hace que el mensaje del navegador sea el de “MIME type” en lugar del 404.
- */
+const PROTECTED_ROUTES = ['/dashboard', '/pending', '/super-admin'];
+
 export function middleware(request: NextRequest) {
   const res = NextResponse.next();
+
   for (const [key, value] of Object.entries(securityHeaders)) {
     res.headers.set(key, value);
   }
+
+  // Protección de rutas: si no hay cookie token, redirigir a login
+  const token = request.cookies.get('token')?.value;
+  const pathname = request.nextUrl.pathname;
+
+  const isProtected = PROTECTED_ROUTES.some((r) => pathname.startsWith(r));
+  if (isProtected && !token) {
+    return NextResponse.redirect(new URL('/login', request.url));
+  }
+
   return res;
 }
 
