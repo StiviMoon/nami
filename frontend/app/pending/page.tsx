@@ -64,6 +64,7 @@ export default function PendingPage() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    clearTokenCookie();
     router.push('/login');
   };
 

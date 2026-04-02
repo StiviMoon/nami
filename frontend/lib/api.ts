@@ -1,3 +1,5 @@
+import { clearTokenCookie } from '@/lib/session-cookie';
+
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
 function getAuthHeaders(): Record<string, string> {
@@ -23,6 +25,7 @@ async function request<T = any>(method: string, path: string, body?: unknown): P
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
+      clearTokenCookie();
       window.location.href = '/login';
     }
     throw new Error(json.error || 'Sesión expirada');

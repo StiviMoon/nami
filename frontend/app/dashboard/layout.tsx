@@ -7,6 +7,7 @@ import { LayoutDashboard, UtensilsCrossed, User, QrCode, LogOut, ExternalLink } 
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { clearTokenCookie } from '@/lib/session-cookie';
 
 const navItems = [
   { href: '/dashboard', label: 'Inicio', icon: LayoutDashboard },
@@ -61,6 +62,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const handleLogout = () => {
     localStorage.removeItem('token');
+    clearTokenCookie();
     router.push('/login');
   };
 

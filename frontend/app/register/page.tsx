@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
+import { setTokenCookie } from '@/lib/session-cookie';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageTransition } from '@/components/motion';
@@ -38,6 +39,7 @@ export default function RegisterPage() {
       const res = await api.post('/api/auth/register', payload);
       if (res.success) {
         localStorage.setItem('token', res.data.token);
+        setTokenCookie(res.data.token);
         const status = res.data.restaurant?.status;
         if (status === 'PENDING') {
           router.push('/pending');

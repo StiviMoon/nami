@@ -7,6 +7,7 @@ import { BarChart3, ClipboardList, Store, History, LogOut, ExternalLink } from '
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
+import { clearTokenCookie } from '@/lib/session-cookie';
 import { supabase } from '@/lib/supabase';
 import { useQueryClient } from '@tanstack/react-query';
 import { toast } from '@/components/ui/toast';
@@ -84,6 +85,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem('token');
+    clearTokenCookie();
     router.push('/login');
   }, [router]);
 
