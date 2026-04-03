@@ -6,7 +6,7 @@ import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
 import { queryKeys } from '@/lib/queryKeys';
 import { formatPrice } from '@/lib/utils';
-import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal, Upload } from 'lucide-react';
+import { Plus, Trash2, Save, X, ImagePlus, Flame, Sparkles, ThumbsUp, SlidersHorizontal, Upload, Pencil } from 'lucide-react';
 import { normalizeMenuCustomization } from '@/lib/menu-customization';
 import { compressImage } from '@/lib/image-compress';
 import { Button } from '@/components/ui/button';
@@ -81,6 +81,11 @@ export default function MenuPage() {
   const [editingCustomItemId, setEditingCustomItemId] = useState<string | null>(null);
   const [editExtras, setEditExtras] = useState<ExtraRow[]>([]);
   const [editRemovables, setEditRemovables] = useState('');
+  const [editingItemId, setEditingItemId] = useState<string | null>(null);
+  const [editItemForm, setEditItemForm] = useState({ ...EMPTY_ITEM });
+  const [editImageFile, setEditImageFile] = useState<File | null>(null);
+  const [editUploadingImage, setEditUploadingImage] = useState(false);
+  const [editUploadError, setEditUploadError] = useState('');
 
   // ── Mutations ─────────────────────────────────────────────────────────────
 
@@ -157,6 +162,29 @@ export default function MenuPage() {
     onError: () => toast('Error al eliminar', 'error'),
   });
 
+  const updateItem = useMutation({
+    mutationFn: ({
+      id,
+      ...body
+    }: {
+      id: string;
+      name: string;
+      description?: string | null;
+      price: number;
+      imageUrl?: string | null;
+      badge?: string | null;
+    }) => api.put(`/api/dashboard/items/${id}`, body),
+    onSuccess: () => {
+      invalidate();
+      setEditingItemId(null);
+      setEditItemForm({ ...EMPTY_ITEM });
+      setEditImageFile(null);
+      setEditUploadError('');
+      toast('Item actualizado', 'success');
+    },
+    onError: (err: Error) => toast(err.message || 'Error al actualizar item', 'error'),
+  });
+
   const updateItemCustom = useMutation({
     mutationFn: ({
       id,
@@ -210,6 +238,47 @@ export default function MenuPage() {
     } finally {
       setUploadingImage(false);
     }
+  };
+
+  const uploadEditItemImage = async () => {
+    if (!editImageFile) return;
+    setEditUploadingImage(true);
+    setEditUploadError('');
+    try {
+      const compressed = await compressImage(editImageFile);
+      const sign = await api.post('/api/dashboard/upload-url', { filename: compressed.name });
+      const { signedUrl, publicUrl } = sign?.data ?? {};
+      if (!signedUrl || !publicUrl) throw new Error('No se pudo obtener URL de subida');
+
+      const uploadRes = await fetch(signedUrl, {
+        method: 'PUT',
+        headers: { 'Content-Type': compressed.type || 'application/octet-stream' },
+        body: compressed,
+      });
+      if (!uploadRes.ok) throw new Error('Error subiendo imagen');
+
+      setEditItemForm((prev) => ({ ...prev, imageUrl: publicUrl }));
+      setEditImageFile(null);
+    } catch (error) {
+      setEditUploadError(error instanceof Error ? error.message : 'No se pudo subir la imagen');
+    } finally {
+      setEditUploadingImage(false);
+    }
+  };
+
+  const openItemEditor = (item: MenuItem) => {
+    setAddingItem(null);
+    setEditingCustomItemId(null);
+    setEditingItemId(item.id);
+    setEditItemForm({
+      name: item.name,
+      description: item.description ?? '',
+      price: String(Number(item.price)),
+      imageUrl: item.imageUrl ?? '',
+      badge: item.badge ?? '',
+    });
+    setEditImageFile(null);
+    setEditUploadError('');
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -287,6 +356,7 @@ export default function MenuPage() {
                         const next = addingItem === cat.id ? null : cat.id;
                         setAddingItem(next);
                         if (next) {
+                          setEditingItemId(null);
                           setItemExtras([]);
                           setItemRemovables('');
                         }
@@ -490,6 +560,116 @@ export default function MenuPage() {
                   <div className="divide-y divide-n-50">
                     {cat.items.map((item: MenuItem) => (
                       <div key={item.id} className="border-b border-n-50 last:border-0">
+                        {editingItemId === item.id ? (
+                          <div className="px-4 sm:px-6 py-4 bg-primary/5 space-y-3">
+                            <div className="grid md:grid-cols-2 gap-3">
+                              <input
+                                value={editItemForm.name}
+                                onChange={(e) => setEditItemForm({ ...editItemForm, name: e.target.value })}
+                                placeholder="Nombre del item"
+                                className="border border-n-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                              />
+                              <input
+                                value={editItemForm.price}
+                                onChange={(e) => setEditItemForm({ ...editItemForm, price: e.target.value.replace(/\D/g, '') })}
+                                placeholder="Precio"
+                                className="border border-n-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                              />
+                            </div>
+                            <input
+                              value={editItemForm.description}
+                              onChange={(e) => setEditItemForm({ ...editItemForm, description: e.target.value })}
+                              placeholder="Descripción (opcional)"
+                              className="w-full border border-n-200 rounded-xl px-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                            />
+                            <div className="rounded-xl border border-n-200 p-4 bg-white space-y-3">
+                              <p className="text-sm font-semibold text-n-900">Foto del producto</p>
+                              <div className="space-y-2">
+                                <input
+                                  id={`menu-edit-item-img-${item.id}`}
+                                  type="file"
+                                  accept="image/*"
+                                  onChange={(e) => setEditImageFile(e.target.files?.[0] ?? null)}
+                                  className="sr-only"
+                                />
+                                <label
+                                  htmlFor={`menu-edit-item-img-${item.id}`}
+                                  className="cursor-pointer flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-n-300 bg-n-50 px-4 py-3 text-sm font-medium text-n-700 hover:border-primary hover:bg-primary/5 transition-colors"
+                                >
+                                  <ImagePlus className="w-4 h-4 text-primary shrink-0" />
+                                  {editImageFile ? editImageFile.name : 'Cambiar foto (opcional)'}
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={uploadEditItemImage}
+                                  disabled={!editImageFile || editUploadingImage}
+                                  className="cursor-pointer w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold bg-n-900 text-white hover:bg-n-700 disabled:opacity-50 transition-colors"
+                                >
+                                  <Upload className="w-4 h-4" />
+                                  {editUploadingImage ? 'Subiendo...' : 'Subir foto'}
+                                </button>
+                              </div>
+                              {editItemForm.imageUrl && (
+                                <div className="flex items-center gap-3 rounded-lg border border-emerald-100 bg-emerald-50/50 px-3 py-2">
+                                  <img src={editItemForm.imageUrl} alt="" className="w-14 h-14 rounded-lg object-cover border border-n-200" />
+                                  <p className="text-xs text-emerald-800 font-medium">Imagen lista en la nube</p>
+                                </div>
+                              )}
+                              {editUploadError && <p className="text-xs text-red-600">{editUploadError}</p>}
+                            </div>
+                            <div>
+                              <p className="text-sm font-semibold mb-2">Badge</p>
+                              <div className="flex flex-wrap gap-2">
+                                {BADGE_OPTIONS.map((opt) => (
+                                  <button
+                                    key={opt.value}
+                                    type="button"
+                                    onClick={() => setEditItemForm({ ...editItemForm, badge: opt.value })}
+                                    className={`cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                                      editItemForm.badge === opt.value
+                                        ? 'border-primary bg-primary/10 text-primary'
+                                        : 'border-n-200 text-n-500 hover:border-n-300'
+                                    }`}
+                                  >
+                                    {opt.label}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 flex-wrap">
+                              <Button
+                                size="sm"
+                                disabled={!editItemForm.name || !editItemForm.price}
+                                isLoading={updateItem.isPending}
+                                onClick={() =>
+                                  updateItem.mutate({
+                                    id: item.id,
+                                    name: editItemForm.name,
+                                    description: editItemForm.description.trim() || null,
+                                    price: Number(editItemForm.price),
+                                    imageUrl: editItemForm.imageUrl.trim() || null,
+                                    badge: editItemForm.badge.trim() || null,
+                                  })
+                                }
+                              >
+                                Guardar cambios
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  setEditingItemId(null);
+                                  setEditItemForm({ ...EMPTY_ITEM });
+                                  setEditImageFile(null);
+                                  setEditUploadError('');
+                                }}
+                              >
+                                Cancelar
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                        <>
                         <div className="px-4 sm:px-6 py-4 space-y-3">
                           <div className="flex items-start gap-3">
                           {item.imageUrl && (
@@ -518,6 +698,14 @@ export default function MenuPage() {
                             </p>
                           </div>
                           <div className="flex gap-1 flex-wrap">
+                            <button
+                              type="button"
+                              onClick={() => openItemEditor(item)}
+                              className="cursor-pointer px-3 py-1.5 rounded-lg text-xs font-medium transition-colors flex items-center gap-1 bg-n-100 text-n-600 hover:bg-n-200"
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                              Editar
+                            </button>
                             <button
                               type="button"
                               onClick={() =>
@@ -641,6 +829,8 @@ export default function MenuPage() {
                             </div>
                           </div>
                         )}
+                        </>
+                      )}
                       </div>
                     ))}
                   </div>

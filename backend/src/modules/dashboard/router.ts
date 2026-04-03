@@ -1,3 +1,4 @@
+import { Prisma } from '@prisma/client';
 import { Router, Request, Response, NextFunction } from 'express';
 import { authMiddleware } from '../../middleware/auth';
 import { requireApproved } from '../../middleware/requireApproved';
@@ -5,6 +6,7 @@ import { prisma } from '../../config/database';
 import { supabaseAdmin } from '../../config/supabase';
 import { ApiError, ForbiddenError, NotFoundError } from '../../utils/errors';
 import { getSingleParam } from '../../utils/http';
+import { generateSlug } from '../../utils/slug';
 import {
   updateRestaurantSchema,
   createCategorySchema,
@@ -54,9 +56,22 @@ router.put('/restaurant', async (req: Request, res: Response, next: NextFunction
     if (!req.user?.restaurantId) throw new NotFoundError('Restaurante');
     const data = updateRestaurantSchema.parse(req.body);
 
+    const updatePayload: Record<string, unknown> = { ...data };
+
+    if (data.name !== undefined) {
+      let newSlug = generateSlug(data.name);
+      const taken = await prisma.restaurant.findFirst({
+        where: { slug: newSlug, NOT: { id: req.user.restaurantId } },
+      });
+      if (taken) {
+        newSlug = `${newSlug}-${Date.now().toString(36)}`;
+      }
+      updatePayload.slug = newSlug;
+    }
+
     const restaurant = await prisma.restaurant.update({
       where: { id: req.user.restaurantId },
-      data,
+      data: updatePayload as Prisma.RestaurantUpdateInput,
     });
 
     res.json({ success: true, data: restaurant });

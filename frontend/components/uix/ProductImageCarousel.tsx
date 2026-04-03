@@ -12,17 +12,17 @@ export function ProductImageCarousel({ photos, itemName }: Props) {
   const [currentIndex, setCurrentIndex] = useState(0);
   if (!photos || photos.length === 0) {
     return (
-      <div className="w-full h-full flex items-center justify-center opacity-10 bg-gray-100">
-        <Utensils size={48} />
+      <div className="flex h-full w-full items-center justify-center bg-stone-100/90">
+        <Utensils className="opacity-[0.12] text-stone-500" size={40} />
       </div>
     );
   }
   return (
-    <div className="relative h-full w-full overflow-hidden group">
+    <div className="group relative h-full w-full overflow-hidden bg-stone-100">
       <img
         src={photos[currentIndex]}
         alt={itemName}
-        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+        className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover object-center transition-transform duration-500 ease-out will-change-transform group-hover:scale-[1.04]"
       />
       {photos.length > 1 && (
         <>

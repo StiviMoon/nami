@@ -16,6 +16,7 @@ import {
   Instagram, Globe, Clock, MessageCircle, Store, Upload, CheckCircle2,
 } from 'lucide-react';
 import { compressImage } from '@/lib/image-compress';
+import { RestaurantLocationMap } from '@/components/web/RestaurantLocationMap';
 
 const DAYS = [
   { key: 'lun', label: 'Lunes' },
@@ -609,6 +610,27 @@ export default function PerfilPage() {
                   </div>
                 </div>
 
+                {/* Vista previa de fuente (menú público) */}
+                <div className="rounded-xl p-4 border border-n-100 bg-n-50">
+                  <p className="text-xs font-medium text-n-500 mb-2">Vista previa de fuente</p>
+                  <div
+                    className="rounded-xl border border-n-200 bg-white p-4 shadow-sm space-y-3"
+                    style={form.fontFamily ? { fontFamily: form.fontFamily } : undefined}
+                  >
+                    <p className="text-lg font-black text-n-900">Tu restaurante</p>
+                    <div className="flex items-center justify-between gap-2 rounded-xl border border-n-100 bg-n-50/80 px-3 py-2">
+                      <span className="text-sm font-semibold text-n-800">Plato de ejemplo</span>
+                      <span className="text-sm font-bold text-primary">$ 15.000</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider text-white bg-n-900"
+                    >
+                      Añadir al pedido
+                    </button>
+                  </div>
+                </div>
+
                 {/* Color preview */}
                 {form.primaryColor && (
                   <div className="rounded-xl p-4 border border-n-100 bg-n-50">
@@ -691,6 +713,11 @@ export default function PerfilPage() {
                   <MapPin className="w-4 h-4" />
                   Usar mi ubicación actual
                 </Button>
+                <RestaurantLocationMap
+                  latitude={form.latitude}
+                  longitude={form.longitude}
+                  onPositionChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+                />
               </div>
             </StaggerItem>
 
@@ -704,19 +731,30 @@ export default function PerfilPage() {
                     return (
                       <div
                         key={key}
-                        className={`rounded-xl px-3 sm:px-4 py-3 transition-colors ${
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => updateScheduleDay(key, 'closed', !day.closed)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            updateScheduleDay(key, 'closed', !day.closed);
+                          }
+                        }}
+                        className={`rounded-xl px-3 sm:px-4 py-3 transition-colors cursor-pointer select-none ${
                           day.closed ? 'bg-red-50/50' : 'bg-n-50'
                         }`}
                       >
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-sm font-medium text-n-700">{label}</span>
-                          <Toggle
-                            size="sm"
-                            checked={!day.closed}
-                            onChange={(v) => updateScheduleDay(key, 'closed', !v)}
-                          />
+                          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
+                            <Toggle
+                              size="sm"
+                              checked={!day.closed}
+                              onChange={(v) => updateScheduleDay(key, 'closed', !v)}
+                            />
+                          </div>
                         </div>
-                        <div className="mt-2 flex-1">
+                        <div className="mt-2 flex-1" onClick={(e) => e.stopPropagation()}>
                           {day.closed ? (
                             <span className="text-sm text-red-400">Cerrado</span>
                           ) : (

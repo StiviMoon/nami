@@ -10,9 +10,26 @@ import { PageTransition } from '@/components/motion';
 import { Button } from '@/components/ui/button';
 
 const CATEGORIES = [
-  'Comida Rápida', 'Corrientazo', 'Hamburguesas', 'Pizza',
-  'Panadería', 'Postres', 'Asados', 'Comida Saludable',
-  'Comida China', 'Heladería', 'Otro',
+  'Comida Rápida',
+  'Corrientazo',
+  'Hamburguesas',
+  'Pizza',
+  'Panadería',
+  'Postres',
+  'Asados',
+  'Comida Saludable',
+  'Comida China',
+  'Heladería',
+  'Menú del día',
+  'Variado / De todo',
+  'Restaurante familiar',
+  'Café',
+  'Mariscos',
+  'Comida italiana',
+  'Árabe',
+  'Sushi',
+  'Vegetariano',
+  'Otro',
 ];
 
 export default function RegisterPage() {
@@ -115,8 +132,11 @@ export default function RegisterPage() {
                   required
                   minLength={8}
                   className={inputClass}
-                  placeholder="Mín. 8 caracteres"
+                  placeholder="8+ caracteres, letra, número y símbolo"
                 />
+                <p className="text-[11px] text-n-400 mt-1">
+                  Usa al menos una letra, un número y un símbolo (ej. !@#).
+                </p>
               </div>
             </div>
 

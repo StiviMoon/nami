@@ -10,6 +10,22 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
 import { PageTransition, FadeIn } from '@/components/motion';
 
+async function urlToDataUrl(imageUrl: string): Promise<string | null> {
+  try {
+    const res = await fetch(imageUrl, { mode: 'cors' });
+    if (!res.ok) return null;
+    const blob = await res.blob();
+    return await new Promise((resolve, reject) => {
+      const fr = new FileReader();
+      fr.onload = () => resolve(fr.result as string);
+      fr.onerror = () => reject(new Error('read'));
+      fr.readAsDataURL(blob);
+    });
+  } catch {
+    return null;
+  }
+}
+
 export default function QRPage() {
   const qrRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
@@ -29,11 +45,26 @@ export default function QRPage() {
     toast('Link copiado', 'success');
   };
 
-  const downloadQR = useCallback(() => {
-    const svg = qrRef.current?.querySelector('svg');
-    if (!svg) return;
+  const downloadQR = useCallback(async () => {
+    const svgEl = qrRef.current?.querySelector('svg');
+    if (!svgEl || !restaurant) return;
 
-    const isPro = restaurant?.plan === 'PRO';
+    const svg = svgEl.cloneNode(true) as SVGSVGElement;
+    if (restaurant.logoUrl) {
+      const dataUrl = await urlToDataUrl(restaurant.logoUrl);
+      if (dataUrl) {
+        svg.querySelectorAll('image').forEach((node) => {
+          const href =
+            node.getAttribute('href') || node.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
+          if (href) {
+            node.setAttribute('href', dataUrl);
+            node.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+          }
+        });
+      }
+    }
+
+    const isPro = restaurant.plan === 'PRO';
     const qrSize = isPro ? 512 : 256;
     const padding = 80;
     const headerHeight = 100;
@@ -63,7 +94,7 @@ export default function QRPage() {
       ctx.textAlign = 'center';
       ctx.font = `bold ${isPro ? 32 : 24}px system-ui, -apple-system, sans-serif`;
       ctx.fillText(
-        restaurant?.name || 'Mi Restaurante',
+        restaurant.name || 'Mi Restaurante',
         totalWidth / 2,
         padding / 2 + headerHeight / 2,
       );
@@ -93,11 +124,12 @@ export default function QRPage() {
       ctx.strokeRect(1, 1, totalWidth - 2, totalHeight - 2);
 
       const link = document.createElement('a');
-      link.download = `${restaurant?.slug || 'qr'}-nami-printable.png`;
+      link.download = `${restaurant.slug || 'qr'}-nami-printable.png`;
       link.href = canvas.toDataURL('image/png');
       link.click();
       toast('QR descargado', 'success');
     };
+    img.onerror = () => toast('No se pudo generar el PNG del QR', 'error');
     img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
   }, [restaurant, qrColor, url]);
 
@@ -224,7 +256,7 @@ export default function QRPage() {
 
                 <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
                   <Button
-                    onClick={downloadQR}
+                    onClick={() => void downloadQR()}
                     icon={<Download className="w-4 h-4" />}
                   >
                     Descargar PNG ({isPro ? '512' : '256'}px)

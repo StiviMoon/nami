@@ -12,7 +12,6 @@ import { CartModal, CartFloatingBarUix } from '@/components/uix/CartModal';
 import { ClosedStoreModal } from '@/components/web/ClosedStoreModal';
 import { FavoriteButton } from '@/components/web/FavoriteButton';
 import { ShareButton } from '@/components/web/ShareButton';
-import { Badge } from '@/components/ui/badge';
 import { getItemBadge } from '@/lib/restaurant-theme';
 import {
   hasCustomization,
@@ -44,9 +43,9 @@ type Restaurant = {
   name: string;
   address?: string | null;
   description?: string | null;
+  bannerText?: string | null;
   coverUrl?: string | null;
   isClosed: boolean;
-  plan: string;
   whatsapp?: string | null;
   instagram?: string | null;
   tiktok?: string | null;
@@ -160,12 +159,12 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         </div>
         <div className="flex items-start justify-between gap-2">
           <h1 className="text-4xl font-black leading-none tracking-tight text-gray-900">{restaurant.name}</h1>
-          {restaurant.plan === 'PRO' && (
-            <Badge variant="pro" icon size="xs">
-              Pro
-            </Badge>
-          )}
         </div>
+        {restaurant.bannerText?.trim() && (
+          <p className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 leading-relaxed">
+            {restaurant.bannerText.trim()}
+          </p>
+        )}
         <div className="mt-8 pt-8 border-t border-gray-100 space-y-4">
           {restaurant.address && (
             <div className="flex items-start gap-3 text-xs font-bold text-gray-400">
@@ -175,6 +174,9 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
           <div className="flex items-start gap-3 text-xs font-bold text-gray-400">
             <Clock size={16} className="shrink-0" style={{ color: ACCENT }} /> {todayHours}
           </div>
+          {restaurant.description?.trim() && (
+            <p className="text-sm text-gray-500 leading-relaxed pt-1">{restaurant.description}</p>
+          )}
         </div>
         {(restaurant.instagram || restaurant.tiktok || restaurant.facebook) && (
           <div className="flex items-center gap-3 mt-4">
@@ -258,17 +260,26 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         <div className="bg-white p-6 -mt-8 relative rounded-t-[2.5rem] shadow-xl">
           <div className="flex items-start justify-between gap-2">
             <h1 className="text-3xl font-black leading-none text-gray-900">{restaurant.name}</h1>
-            {restaurant.plan === 'PRO' && (
-              <Badge variant="pro" icon size="xs">
-                Pro
-              </Badge>
-            )}
           </div>
+          {restaurant.bannerText?.trim() && (
+            <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-gray-500">
+              {restaurant.bannerText.trim()}
+            </p>
+          )}
           {restaurant.address && (
             <div className="mt-3 text-[10px] font-black uppercase text-gray-400">
               <MapPin size={12} className="inline mr-1" style={{ color: ACCENT }} />
               {restaurant.address}
             </div>
+          )}
+          <div className="mt-2 flex items-start gap-1.5 text-[10px] font-bold text-gray-400">
+            <Clock size={12} className="shrink-0 mt-0.5" style={{ color: ACCENT }} />
+            <span>{todayHours}</span>
+          </div>
+          {restaurant.description?.trim() && (
+            <p className="mt-3 text-sm text-gray-500 leading-relaxed line-clamp-4 lg:line-clamp-none">
+              {restaurant.description}
+            </p>
           )}
         </div>
         <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-xl py-3 flex gap-2 overflow-x-auto scrollbar-hide px-4 sm:px-6 border-b border-gray-100 supports-backdrop-filter:bg-gray-50/80">
@@ -295,14 +306,14 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
           return (
             <article
               key={item.id}
-              className={`bg-white rounded-[2.5rem] border border-gray-100 overflow-hidden flex flex-col sm:flex-row shadow-sm hover:shadow-md transition-all ${
+              className={`flex flex-row items-center overflow-hidden bg-white rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md sm:items-stretch sm:rounded-[2.5rem] ${
                 !item.isAvailable ? 'opacity-60' : ''
               }`}
             >
-              <div className="h-56 sm:w-60 shrink-0 relative">
+              <div className="relative mx-3 my-3 h-22 w-22 shrink-0 overflow-hidden rounded-2xl ring-1 ring-black/4 min-[400px]:mx-3.5 min-[400px]:my-3.5 min-[400px]:h-28 min-[400px]:w-28 sm:mx-0 sm:my-0 sm:h-56 sm:w-60 sm:rounded-none sm:ring-0 sm:self-start">
                 <ProductImageCarousel photos={photos} itemName={item.name} />
               </div>
-              <div className="p-6 flex flex-col justify-between flex-1 min-w-0">
+              <div className="p-4 sm:p-6 flex flex-col justify-between flex-1 min-w-0">
                 <div>
                   <div className="flex justify-between items-start mb-2 gap-2">
                     <h4 className="font-black text-lg text-gray-900">{item.name}</h4>

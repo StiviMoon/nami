@@ -156,11 +156,12 @@ export function AnimatedNumber({ value, className, suffix = '', prefix = '', dur
   return <span ref={ref} className={className}>{prefix}0{suffix}</span>;
 }
 
+/** Sin translateY: el transform del padre rompe `position: sticky` en hijos (ej. barra de categorías del menú). */
 export function PageTransition({ children, className }: { children: ReactNode; className?: string }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
       transition={{ duration: 0.35, ease: 'easeOut' }}
       className={className}
     >

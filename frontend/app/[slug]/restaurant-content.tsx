@@ -26,9 +26,9 @@ export function RestaurantContent({ slug }: { slug: string }) {
         name: string;
         address?: string | null;
         description?: string | null;
+        bannerText?: string | null;
         coverUrl?: string | null;
         isClosed: boolean;
-        plan: string;
         schedule?: string | null;
         whatsapp?: string | null;
         instagram?: string | null;
