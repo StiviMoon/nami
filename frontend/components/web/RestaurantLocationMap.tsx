@@ -5,6 +5,8 @@ import { useEffect, useRef } from 'react';
 const DEFAULT_LAT = 3.5814;
 const DEFAULT_LNG = -76.4833;
 
+const round6 = (n: number) => Math.round(n * 1e6) / 1e6;
+
 type Props = {
   latitude: number | null | undefined;
   longitude: number | null | undefined;
@@ -38,8 +40,13 @@ export function RestaurantLocationMap({ latitude, longitude, onPositionChange }:
 
       if (cancelled || !elRef.current) return;
 
-      const lat = typeof latitude === 'number' && !Number.isNaN(latitude) ? latitude : DEFAULT_LAT;
-      const lng = typeof longitude === 'number' && !Number.isNaN(longitude) ? longitude : DEFAULT_LNG;
+      const hasValid =
+        typeof latitude === 'number' &&
+        !Number.isNaN(latitude) &&
+        typeof longitude === 'number' &&
+        !Number.isNaN(longitude);
+      const lat = hasValid ? latitude : DEFAULT_LAT;
+      const lng = hasValid ? longitude : DEFAULT_LNG;
 
       const map = L.map(elRef.current, { scrollWheelZoom: true }).setView([lat, lng], 16);
       mapRef.current = map;
@@ -51,16 +58,22 @@ export function RestaurantLocationMap({ latitude, longitude, onPositionChange }:
       const marker = L.marker([lat, lng], { draggable: true }).addTo(map);
       markerRef.current = marker;
 
+      // Si no había coordenadas guardadas, el pin visible debe quedar reflejado en el formulario al guardar
+      if (!hasValid) {
+        skipNextExternalSync.current = true;
+        onPositionChange(round6(lat), round6(lng));
+      }
+
       marker.on('dragend', () => {
         const p = marker.getLatLng();
         skipNextExternalSync.current = true;
-        onPositionChange(p.lat, p.lng);
+        onPositionChange(round6(p.lat), round6(p.lng));
       });
 
       map.on('click', (e) => {
         marker.setLatLng(e.latlng);
         skipNextExternalSync.current = true;
-        onPositionChange(e.latlng.lat, e.latlng.lng);
+        onPositionChange(round6(e.latlng.lat), round6(e.latlng.lng));
       });
 
       setTimeout(() => map.invalidateSize(), 200);

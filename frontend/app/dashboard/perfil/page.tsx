@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useLayoutEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
@@ -8,13 +8,18 @@ import { queryKeys } from '@/lib/queryKeys';
 import { Input, Textarea } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Toggle } from '@/components/ui/toggle';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageTransition, FadeIn, StaggerContainer, StaggerItem } from '@/components/motion';
 import {
   Save, ImagePlus, MapPin, Palette, Type, LayoutGrid, LayoutList,
-  Instagram, Globe, Clock, MessageCircle, Store, Upload, CheckCircle2,
+  Instagram, Globe, Clock, MessageCircle, Store, Upload, CheckCircle2, Copy,
 } from 'lucide-react';
+import { cn } from '@/lib/utils';
 import { compressImage } from '@/lib/image-compress';
 import { RestaurantLocationMap } from '@/components/web/RestaurantLocationMap';
 
@@ -84,6 +89,17 @@ function serializeSchedule(schedule: Schedule): string {
   return JSON.stringify(result);
 }
 
+/** Prisma/JSON a veces entrega floats como string; el mapa necesita number */
+function numOrNull(v: unknown): number | null {
+  if (v == null) return null;
+  if (typeof v === 'number' && Number.isFinite(v)) return v;
+  if (typeof v === 'string' && v.trim() !== '') {
+    const n = Number(v);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
 function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
   return (
     <div className="flex items-center gap-2 pb-2 border-b border-n-100">
@@ -117,6 +133,8 @@ export default function PerfilPage() {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [gettingLocation, setGettingLocation] = useState(false);
   const [schedule, setSchedule] = useState<Schedule>(() => parseSchedule(null));
+  /** Evita montar Leaflet antes de hidratar lat/lng desde el API (si no, el mapa queda en el default y ignora lo guardado). */
+  const [mapReady, setMapReady] = useState(false);
 
   const [form, setForm] = useState({
     name: '',
@@ -143,33 +161,37 @@ export default function PerfilPage() {
 
   const { data, isLoading } = useMyRestaurant();
 
-  useEffect(() => {
-    if (data) {
-      const r = data;
-      setForm({
-        name: r.name || '',
-        description: r.description || '',
-        address: r.address || '',
-        whatsapp: r.whatsapp || '',
-        category: r.category || '',
-        logoUrl: r.logoUrl || '',
-        coverUrl: r.coverUrl || '',
-        themePreset: r.themePreset || 'SUNSET',
-        menuStyle: r.menuStyle || 'ROUNDED',
-        isClosed: r.isClosed || false,
-        primaryColor: r.primaryColor || '',
-        secondaryColor: r.secondaryColor || '',
-        fontFamily: r.fontFamily || '',
-        menuLayout: r.menuLayout || 'list',
-        bannerText: r.bannerText || '',
-        instagram: r.instagram || '',
-        tiktok: r.tiktok || '',
-        facebook: r.facebook || '',
-        latitude: r.latitude ?? null,
-        longitude: r.longitude ?? null,
-      });
-      setSchedule(parseSchedule(r.schedule));
+  // useLayoutEffect: hidratar antes del paint; el mapa solo monta después (mapReady) con coords ya en el formulario
+  useLayoutEffect(() => {
+    if (!data) {
+      setMapReady(false);
+      return;
     }
+    const r = data;
+    setForm({
+      name: r.name || '',
+      description: r.description || '',
+      address: r.address || '',
+      whatsapp: r.whatsapp || '',
+      category: r.category || '',
+      logoUrl: r.logoUrl || '',
+      coverUrl: r.coverUrl || '',
+      themePreset: r.themePreset || 'SUNSET',
+      menuStyle: r.menuStyle || 'ROUNDED',
+      isClosed: r.isClosed || false,
+      primaryColor: r.primaryColor || '',
+      secondaryColor: r.secondaryColor || '',
+      fontFamily: r.fontFamily || '',
+      menuLayout: r.menuLayout || 'list',
+      bannerText: r.bannerText || '',
+      instagram: r.instagram || '',
+      tiktok: r.tiktok || '',
+      facebook: r.facebook || '',
+      latitude: numOrNull(r.latitude),
+      longitude: numOrNull(r.longitude),
+    });
+    setSchedule(parseSchedule(r.schedule));
+    setMapReady(true);
   }, [data]);
 
   const update = useMutation({
@@ -185,6 +207,15 @@ export default function PerfilPage() {
     e.preventDefault();
     const payload: Record<string, unknown> = { ...form };
     payload.schedule = serializeSchedule(schedule);
+    // Ubicación: enviar siempre para persistir en BD (null borra coordenadas)
+    payload.latitude =
+      typeof form.latitude === 'number' && !Number.isNaN(form.latitude)
+        ? Math.round(form.latitude * 1e6) / 1e6
+        : null;
+    payload.longitude =
+      typeof form.longitude === 'number' && !Number.isNaN(form.longitude)
+        ? Math.round(form.longitude * 1e6) / 1e6
+        : null;
     // Clean empty strings to null for nullable fields
     for (const key of ['primaryColor', 'secondaryColor', 'fontFamily', 'bannerText', 'instagram', 'tiktok', 'facebook']) {
       if (payload[key] === '') payload[key] = null;
@@ -254,6 +285,19 @@ export default function PerfilPage() {
       ...prev,
       [day]: { ...prev[day], [field]: value },
     }));
+  };
+
+  /** Mismo horario que el lunes en martes–viernes (atajo típico de restaurantes). */
+  const copyMondayToWeekdays = () => {
+    const lun = schedule.lun;
+    setSchedule((prev) => ({
+      ...prev,
+      mar: { ...lun },
+      mie: { ...lun },
+      jue: { ...lun },
+      vie: { ...lun },
+    }));
+    toast('Horario del lunes aplicado a martes–viernes', 'success');
   };
 
   if (isLoading) {
@@ -713,69 +757,137 @@ export default function PerfilPage() {
                   <MapPin className="w-4 h-4" />
                   Usar mi ubicación actual
                 </Button>
-                <RestaurantLocationMap
-                  latitude={form.latitude}
-                  longitude={form.longitude}
-                  onPositionChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
-                />
+                {mapReady ? (
+                  <RestaurantLocationMap
+                    latitude={form.latitude}
+                    longitude={form.longitude}
+                    onPositionChange={(lat, lng) => setForm((f) => ({ ...f, latitude: lat, longitude: lng }))}
+                  />
+                ) : (
+                  <div className="h-56 w-full animate-pulse rounded-xl border border-n-200 bg-n-100 sm:h-72" aria-hidden />
+                )}
               </div>
             </StaggerItem>
 
-            {/* === HORARIOS === */}
+            {/* === HORARIOS (Radix / estilo shadcn + inputs nativos type=time) === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
+              <div className="rounded-2xl border border-n-100 bg-white p-4 sm:p-6 space-y-4">
                 <SectionHeader icon={Clock} title="Horarios de atención" />
-                <div className="space-y-2">
+                <p className="text-xs text-n-500 leading-relaxed -mt-1">
+                  El interruptor usa el patrón accesible de Radix (como shadcn). Las horas usan el{' '}
+                  <strong className="text-n-700">selector nativo</strong> del sistema al tocar el campo
+                  (iOS / Android / escritorio). Guarda con «Guardar cambios».
+                </p>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={copyMondayToWeekdays}
+                  className="w-full sm:w-auto"
+                >
+                  <Copy className="w-4 h-4" />
+                  Copiar horario del lunes a martes–viernes
+                </Button>
+
+                <div className="space-y-3 pt-1">
                   {DAYS.map(({ key, label }) => {
                     const day = schedule[key];
+                    const idOpen = `schedule-${key}-open`;
+                    const idClose = `schedule-${key}-close`;
+                    const switchId = `schedule-${key}-switch`;
+                    const initials =
+                      key === 'mie'
+                        ? 'Mi'
+                        : key === 'sab'
+                          ? 'Sa'
+                          : key === 'dom'
+                            ? 'Do'
+                            : label.slice(0, 2);
+
                     return (
-                      <div
+                      <Card
                         key={key}
-                        role="button"
-                        tabIndex={0}
-                        onClick={() => updateScheduleDay(key, 'closed', !day.closed)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            updateScheduleDay(key, 'closed', !day.closed);
-                          }
-                        }}
-                        className={`rounded-xl px-3 sm:px-4 py-3 transition-colors cursor-pointer select-none ${
-                          day.closed ? 'bg-red-50/50' : 'bg-n-50'
-                        }`}
+                        as="div"
+                        className={cn(
+                          'overflow-visible shadow-sm transition-colors',
+                          day.closed
+                            ? 'border-red-100/90 bg-red-50/20'
+                            : 'border-n-200 bg-n-50/30 hover:border-primary/20'
+                        )}
                       >
-                        <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-medium text-n-700">{label}</span>
-                          <div onClick={(e) => e.stopPropagation()} className="shrink-0">
-                            <Toggle
-                              size="sm"
-                              checked={!day.closed}
-                              onChange={(v) => updateScheduleDay(key, 'closed', !v)}
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-2 flex-1" onClick={(e) => e.stopPropagation()}>
-                          {day.closed ? (
-                            <span className="text-sm text-red-400">Cerrado</span>
-                          ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                              <input
-                                type="time"
-                                value={day.open}
-                                onChange={(e) => updateScheduleDay(key, 'open', e.target.value)}
-                                className="w-full min-w-0 border border-n-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
-                              />
-                              <span className="hidden sm:inline text-n-400 text-sm text-center">—</span>
-                              <input
-                                type="time"
-                                value={day.close}
-                                onChange={(e) => updateScheduleDay(key, 'close', e.target.value)}
-                                className="w-full min-w-0 border border-n-200 rounded-lg px-2 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
+                        <CardHeader className="pb-3">
+                          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <div
+                                className={cn(
+                                  'flex size-11 shrink-0 items-center justify-center rounded-xl text-xs font-black tabular-nums',
+                                  day.closed ? 'bg-red-100 text-red-700' : 'bg-primary/12 text-primary'
+                                )}
+                                aria-hidden
+                              >
+                                {initials}
+                              </div>
+                              <div className="min-w-0 space-y-1">
+                                <Label
+                                  htmlFor={switchId}
+                                  className="cursor-pointer text-base font-semibold text-n-900"
+                                >
+                                  {label}
+                                </Label>
+                                <p className="text-xs text-n-500 leading-snug">
+                                  {day.closed
+                                    ? 'Sin atención este día en el menú público'
+                                    : `Clientes verán: ${day.open} – ${day.close}`}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-3 sm:shrink-0">
+                              <span
+                                className={cn(
+                                  'text-xs font-medium tabular-nums',
+                                  day.closed ? 'text-red-600/90' : 'text-emerald-700'
+                                )}
+                              >
+                                {day.closed ? 'Cerrado' : 'Abierto'}
+                              </span>
+                              <Switch
+                                id={switchId}
+                                checked={!day.closed}
+                                onCheckedChange={(open) => updateScheduleDay(key, 'closed', !open)}
+                                aria-label={day.closed ? `Abrir ${label}` : `Cerrar ${label}`}
                               />
                             </div>
-                          )}
-                        </div>
-                      </div>
+                          </div>
+                        </CardHeader>
+
+                        {!day.closed && (
+                          <>
+                            <Separator className="bg-n-200/90" />
+                            <CardContent className="pt-4">
+                              <div className="grid gap-5 sm:grid-cols-2 sm:gap-6">
+                                <Input
+                                  id={idOpen}
+                                  label="Apertura"
+                                  type="time"
+                                  value={day.open}
+                                  onChange={(e) => updateScheduleDay(key, 'open', e.target.value)}
+                                  className="min-h-12 text-base tabular-nums sm:min-h-11 sm:text-sm"
+                                  hint="Selector de hora del dispositivo"
+                                />
+                                <Input
+                                  id={idClose}
+                                  label="Cierre"
+                                  type="time"
+                                  value={day.close}
+                                  onChange={(e) => updateScheduleDay(key, 'close', e.target.value)}
+                                  className="min-h-12 text-base tabular-nums sm:min-h-11 sm:text-sm"
+                                  hint="Selector de hora del dispositivo"
+                                />
+                              </div>
+                            </CardContent>
+                          </>
+                        )}
+                      </Card>
                     );
                   })}
                 </div>

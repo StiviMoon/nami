@@ -15,7 +15,7 @@ import adminRouter from './modules/admin/router';
 import { errorHandler } from './middleware/errorHandler';
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8001;
 const isProd = process.env.NODE_ENV === 'production';
 
 // --- Security ---
@@ -33,7 +33,7 @@ app.use(cors({
     ? allowedOrigins
     : isProd
       ? false  // Block all cross-origin in prod if not configured
-      : 'http://localhost:3001',
+      : 'http://localhost:4000',
   credentials: true,
 }));
 

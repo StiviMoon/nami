@@ -3,15 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3001",
-    "dev:clean": "rm -rf .next && next dev -p 3001",
-    "dev:turbo": "next dev -p 3001 --turbopack",
+    "dev": "next dev -p 4000",
+    "dev:clean": "rm -rf .next && next dev -p 4000",
+    "dev:turbo": "next dev -p 4000 --turbopack",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint . --max-warnings=0"
+    "start": "next start"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.0.0",
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-separator": "^1.1.8",
+    "@radix-ui/react-switch": "^1.2.6",
     "@supabase/supabase-js": "^2.49.0",
     "@tailwindcss/postcss": "^4.1.0",
     "@tanstack/react-query": "^5.75.0",

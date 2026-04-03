@@ -17,8 +17,24 @@ export const updateRestaurantSchema = z.object({
   themePreset: z.enum(['SUNSET', 'FOREST', 'OCEAN', 'BERRY', 'MONO']).optional(),
   menuStyle: z.enum(['ROUNDED', 'SOFT', 'MINIMAL']).optional(),
   isClosed: z.boolean().optional(),
-  latitude: z.number().min(-90).max(90).optional().nullable(),
-  longitude: z.number().min(-180).max(180).optional().nullable(),
+  latitude: z.preprocess(
+    (v) => {
+      if (v === '' || v === undefined) return undefined;
+      if (v === null) return null;
+      const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+      return Number.isFinite(n) ? n : v;
+    },
+    z.number().min(-90).max(90).optional().nullable()
+  ),
+  longitude: z.preprocess(
+    (v) => {
+      if (v === '' || v === undefined) return undefined;
+      if (v === null) return null;
+      const n = typeof v === 'string' ? parseFloat(v) : Number(v);
+      return Number.isFinite(n) ? n : v;
+    },
+    z.number().min(-180).max(180).optional().nullable()
+  ),
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   fontFamily: z.string().max(50).optional().nullable(),
