@@ -123,25 +123,25 @@ export const useCart = create<CartStore>((set, get) => ({
         : [`TOTAL (productos): $${subtotalStr}`];
 
     const msg = [
-      'HOLA, QUIERO REALIZAR ESTE PEDIDO:',
+      'HOLA, QUIERO REALIZAR ESTE PEDIDO 📋:',
       '',
-      `RESTAURANTE: ${sanitizeLine(s.restaurantName || '')}`,
-      ...(customerName ? ['', `CLIENTE: ${sanitizeLine(customerName)}`] : []),
+      `🍽️ RESTAURANTE: ${sanitizeLine(s.restaurantName || '')}`,
+      ...(customerName ? ['', `👤 CLIENTE: ${sanitizeLine(customerName)}`] : []),
       '',
-      'DETALLE DEL PEDIDO:',
+      '🛒 DETALLE DEL PEDIDO :',
       itemsList,
       '',
-      `METODO DE PAGO: ${sanitizeLine(paymentMethod)}`,
-      `MODALIDAD: ${mode}`,
+      `💳 METODO DE PAGO: ${sanitizeLine(paymentMethod)}`,
+      `🛵 MODALIDAD: ${mode}`,
       ...(deliveryMode === 'delivery'
         ? [
-            `DIRECCION DE ENTREGA: ${sanitizeLine(deliveryAddress || '')}`,
-            `TELEFONO DE CONTACTO: ${sanitizeLine(deliveryPhone || '')}`,
+            `📍DIRECCION DE ENTREGA: ${sanitizeLine(deliveryAddress || '')}`,
+            `📞TELEFONO DE CONTACTO: ${sanitizeLine(deliveryPhone || '')}`,
           ]
         : []),
       ...totalLines,
       '',
-      'ENVIADO DESDE nami',
+      'ENVIADO DESDE Ñami 🧡',
     ].join('\n');
 
     const phone = (s.restaurantWhatsapp || '').replace(/\D/g, '');
