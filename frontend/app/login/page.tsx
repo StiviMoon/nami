@@ -71,7 +71,7 @@ export default function LoginPage() {
           />
 
           <div className="relative z-10">
-            <Link href="/" className="text-2xl font-display font-bold text-white cursor-pointer">ÑAMI</Link>
+            <Link href="/" className="text-2xl font-display font-bold text-white cursor-pointer">nami</Link>
           </div>
 
           <div className="relative z-10">
@@ -94,7 +94,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <p className="relative z-10 text-n-600 text-xs">© 2026 ÑAMI · Yumbo, Colombia</p>
+          <p className="relative z-10 text-n-600 text-xs">© 2026 nami · Yumbo, Colombia</p>
         </div>
 
         {/* Right: Form — overflow hidden so blur decor never causes horizontal scroll */}
@@ -106,7 +106,7 @@ export default function LoginPage() {
           <div className="w-full max-w-sm min-w-0 relative z-10">
             {/* Mobile logo */}
             <div className="lg:hidden text-center mb-8">
-              <Link href="/" className="text-2xl font-display font-bold text-primary cursor-pointer">ÑAMI</Link>
+              <Link href="/" className="text-2xl font-display font-bold text-primary cursor-pointer">nami</Link>
             </div>
 
             <div className="mb-8">

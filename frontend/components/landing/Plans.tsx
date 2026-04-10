@@ -26,7 +26,7 @@ const plans: Plan[] = [
     period: '/mes',
     desc: 'Perfecto para empezar',
     features: [
-      'Perfil en ÑAMI',
+      'Perfil en nami',
       'Menú hasta 20 items',
       'Pedidos por WhatsApp',
       'Link propio',

@@ -113,7 +113,7 @@ export default function BienvenidaPage() {
                     size="lg"
                     className="w-full"
                     onClick={() => {
-                      localStorage.setItem('ñami_onboarded', '1');
+                      localStorage.setItem('nami_onboarded', '1');
                       router.push('/dashboard');
                     }}
                   >
@@ -134,7 +134,7 @@ export default function BienvenidaPage() {
                 <button
                   type="button"
                   onClick={() => {
-                    localStorage.setItem('ñami_onboarded', '1');
+                    localStorage.setItem('nami_onboarded', '1');
                     router.push('/dashboard');
                   }}
                   className="text-xs text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"

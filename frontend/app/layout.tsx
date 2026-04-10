@@ -16,10 +16,10 @@ const jakarta = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: 'ÑAMI — Descubre restaurantes locales',
+  title: 'nami — Descubre restaurantes locales',
   description: 'Feed de comida local en Yumbo. Pide directo por WhatsApp. Sin comisiones.',
   manifest: '/manifest.json',
-  applicationName: 'ÑAMI',
+  applicationName: 'nami',
   icons: {
     icon: [
       { url: '/favicon-32.png', sizes: '32x32', type: 'image/png' },
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
-    title: 'ÑAMI',
+    title: 'nami',
   },
   formatDetection: {
     telephone: false,

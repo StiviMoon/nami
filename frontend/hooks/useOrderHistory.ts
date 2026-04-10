@@ -36,6 +36,6 @@ export const useOrderHistory = create<OrderHistoryStore>()(
         })),
       clear: () => set({ orders: [] }),
     }),
-    { name: 'ñami-order-history' }
+    { name: 'nami-order-history' }
   )
 );

@@ -1,4 +1,4 @@
-# 🎨 ÑAMI Frontend — Guía Completa de Implementación
+# 🎨 nami Frontend — Guía Completa de Implementación
 
 **Versión:** 3.0 Profesional
 **Fecha:** 26 marzo 2026
@@ -528,7 +528,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'ñami-cart',
+      name: 'nami-cart',
       version: 1,
     }
   )
@@ -653,7 +653,7 @@ export default function RootLayout({
 
 ## 🎨 LANDING PAGE MEJORADA
 
-Ver documento separado: `ÑAMI_LANDING_PREMIUM.md`
+Ver documento separado: `nami_LANDING_PREMIUM.md`
 
 ---
 
@@ -782,8 +782,8 @@ export function SearchBar() {
 // public/manifest.json
 
 {
-  "name": "ÑAMI - Descubre comida local",
-  "short_name": "ÑAMI",
+  "name": "nami - Descubre comida local",
+  "short_name": "nami",
   "description": "Descubre restaurantes reales sin comisión alta. Ordena directo por WhatsApp.",
   "start_url": "/",
   "scope": "/",
@@ -840,25 +840,25 @@ export function SearchBar() {
 // src/app/layout.tsx - PWA Setup
 
 export const metadata: Metadata = {
-  title: 'ÑAMI | Descubre restaurantes locales',
+  title: 'nami | Descubre restaurantes locales',
   description: 'Descubre la mejor comida sin aplicaciones pesadas. Ordena directo por WhatsApp.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'ÑAMI',
+    title: 'nami',
   },
   formatDetection: {
     telephone: false,
   },
   openGraph: {
     type: 'website',
-    url: 'https://ñami.app',
-    title: 'ÑAMI',
+    url: 'https://nami.app',
+    title: 'nami',
     description: 'Descubre restaurantes reales',
     images: [
       {
-        url: 'https://ñami.app/og-image.png',
+        url: 'https://nami.app/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -912,10 +912,10 @@ import Image from 'next/image'
 ### 2. Code Splitting
 
 ```typescript
-// Use dyñamic imports para componentes pesados
-import dyñamic from 'next/dyñamic'
+// Use dynamic imports para componentes pesados
+import dynamic from 'next/dynamic'
 
-const HeavyChart = dyñamic(
+const HeavyChart = dynamic(
   () => import('@/components/dashboard/AnalyticsChart'),
   {
     loading: () => <div>Cargando...</div>,

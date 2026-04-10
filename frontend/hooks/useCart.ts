@@ -141,7 +141,7 @@ export const useCart = create<CartStore>((set, get) => ({
         : []),
       ...totalLines,
       '',
-      'ENVIADO DESDE ÑAMI',
+      'ENVIADO DESDE nami',
     ].join('\n');
 
     const phone = (s.restaurantWhatsapp || '').replace(/\D/g, '');

@@ -81,7 +81,7 @@ export default function RegisterPage() {
 
         <div className="w-full max-w-lg relative z-10">
           <div className="text-center mb-8">
-            <Link href="/" className="text-3xl font-display font-bold text-primary">ÑAMI</Link>
+            <Link href="/" className="text-3xl font-display font-bold text-primary">nami</Link>
             <p className="text-n-500 mt-2">Registra tu restaurante en minutos</p>
           </div>
 

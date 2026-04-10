@@ -1,4 +1,4 @@
-# 🍔 ÑAMI — Arquitectura Senior Profesional v3.0
+# 🍔 nami — Arquitectura Senior Profesional v3.0
 
 **Fecha:** 26 marzo 2026
 **Versión:** 3.0 - Arquitectura Profesional Mejorada
@@ -9,11 +9,11 @@
 
 ## 📋 RESUMEN EJECUTIVO
 
-ÑAMI v3.0 es una **plataforma local de descubrimiento de restaurantes** con arquitectura profesional, diseño moderno similar a Stripe/Vercel/Figma, y performance de clase mundial.
+nami v3.0 es una **plataforma local de descubrimiento de restaurantes** con arquitectura profesional, diseño moderno similar a Stripe/Vercel/Figma, y performance de clase mundial.
 
 ### Diferenciadores Vs Competencia
 
-| Aspecto | Rappi | Uber Eats | Google | ÑAMI v3 |
+| Aspecto | Rappi | Uber Eats | Google | nami v3 |
 |---------|-------|-----------|--------|---------|
 | **UX/Diseño** | Funcional | Aceptable | Básico | ⭐ PREMIUM (Stripe-tier) |
 | **Velocidad** | Lenta (React) | Media | Rápida | ⭐ ULTRA-RÁPIDA (<1s) |
@@ -31,7 +31,7 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                     ÑAMI SYSTEM ARCHITECTURE                 │
+│                     nami SYSTEM ARCHITECTURE                 │
 └──────────────────────────────────────────────────────────────┘
 
 FRONTEND LAYER (Usuarios)
@@ -42,7 +42,7 @@ FRONTEND LAYER (Usuarios)
 │   ├── Performance: <800ms LCP, <1s FCP
 │   └── Design: Stripe-inspired minimalism
 │
-├── Web App (ñami.app)
+├── Web App (nami.app)
 │   ├── Framework: Next.js 16 + TypeScript
 │   ├── State: Zustand + React Query (TanStack)
 │   ├── UI Library: shadcn/ui + Radix UI
@@ -63,7 +63,7 @@ FRONTEND LAYER (Usuarios)
     ├── Complex UIs: Recharts (charts avanzados)
     ├── Real-time: Socket.io (órdenes)
     ├── File upload: Uppy + tus protocol
-    └── Performance: React.memo + dyñamic imports
+    └── Performance: React.memo + dynamic imports
 
 API GATEWAY & BACKEND
 ├── Runtime: Node.js 20 LTS
@@ -170,7 +170,7 @@ Primary (Naranja):
 ├── 200:  #FED7AA
 ├── 300:  #FDBA74
 ├── 400:  #FB923C
-├── 500:  #F97316 ← Brand orange (Ñami)
+├── 500:  #F97316 ← Brand orange (nami)
 ├── 600:  #EA580C
 ├── 700:  #C2410C
 ├── 800:  #9A360A
@@ -1475,21 +1475,21 @@ Tu landing actual es funcional pero necesita **modernización visual importante*
 
 ```
 1. NAVBAR
-   ├── Logo ÑAMI (tipografía Sora Bold)
+   ├── Logo nami (tipografía Sora Bold)
    ├── Links: Producto, Planes, Restaurantes, Documentos
    ├── Dark mode toggle
    └── CTA: "Acceso para restaurantes" → Modal login
 
 2. HERO
    ├── Headline: "Descubre la mejor comida sin aplicaciones pesadas"
-   ├── Subheadline: "ÑAMI conecta clientes reales con restaurantes reales"
+   ├── Subheadline: "nami conecta clientes reales con restaurantes reales"
    ├── CTA: "Comenzar ahora" (naranja)
    ├── Visual: Mockup animado de app (Loom-style)
    └── Scroll indicator animado
 
 3. PROBLEM SECTION
    ├── Lado izq: Problema (Rappi cobra 30%, Google viejo, etc.)
-   ├── Lado der: Solución (ÑAMI, 0% comisión, etc.)
+   ├── Lado der: Solución (nami, 0% comisión, etc.)
    └── Animaciones staggered
 
 4. FEATURES (3 columnas)
@@ -1545,14 +1545,14 @@ vercel.json:
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "env": {
-    "NEXT_PUBLIC_API_URL": "@ñami_api_url",
+    "NEXT_PUBLIC_API_URL": "@nami_api_url",
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
     "NEXT_PUBLIC_ALGOLIA_APP_ID": "@algolia_app_id"
   },
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://api.ñami.app/api/:path*"
+      "destination": "https://api.nami.app/api/:path*"
     }
   ],
   "redirects": [
@@ -1571,7 +1571,7 @@ vercel.json:
 render.yaml:
 services:
   - type: web
-    name: ñami-api
+    name: nami-api
     env: node
     plan: standard
     buildCommand: npm install && npm run build

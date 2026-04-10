@@ -72,7 +72,7 @@ export function Hero() {
               animate="show"
               className="mt-5 md:mt-6 text-base sm:text-lg md:text-[1.125rem] lg:text-[1.2rem] text-n-500 leading-relaxed max-w-[34rem] lg:max-w-[480px]"
             >
-              ÑAMI no cobra comisión. Los clientes te encuentran, piden por WhatsApp
+              nami no cobra comisión. Los clientes te encuentran, piden por WhatsApp
               y te pagan a ti. Sin intermediarios que se queden con tu ganancia.
             </motion.p>
 

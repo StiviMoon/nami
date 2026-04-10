@@ -59,7 +59,7 @@ export function CTA() {
 
         <StaggerItem>
           <p className="text-n-500 text-sm mt-10">
-            Más de 50 restaurantes ya están en ÑAMI · 100% gratis para clientes
+            Más de 50 restaurantes ya están en nami · 100% gratis para clientes
           </p>
         </StaggerItem>
       </StaggerContainer>

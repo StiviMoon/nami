@@ -25,7 +25,7 @@ backend/prisma/*.db
 
 # Misc
 *.log
-ÑAMI_Estrategia_v2.docx
+nami_Estrategia_v2.docx
 
 .claude
 frontend/tsconfig.tsbuildinfo

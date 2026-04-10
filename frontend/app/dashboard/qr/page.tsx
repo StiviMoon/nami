@@ -159,14 +159,14 @@ export default function QRPage() {
 
         ctx.fillStyle = qrColor;
         ctx.font = `800 ${isPro ? 15 : 12}px system-ui, sans-serif`;
-        ctx.fillText('ÑAMI', totalWidth / 2, footerY + 26);
+        ctx.fillText('nami', totalWidth / 2, footerY + 26);
 
         ctx.strokeStyle = '#E2E8F0';
         ctx.lineWidth = 2;
         ctx.strokeRect(1, 1, totalWidth - 2, totalHeight - 2);
 
         const link = document.createElement('a');
-        link.download = `${restaurant.slug}-ñami-qr.png`;
+        link.download = `${restaurant.slug}-nami-qr.png`;
         link.href = canvas.toDataURL('image/png', 1);
         link.click();
         toast('QR descargado con buena calidad', 'success');
@@ -208,7 +208,7 @@ export default function QRPage() {
           .qr { display: inline-block; line-height: 0; }
           .qr svg { display: block; }
           .url { color: #94A3B8; font-size: 11px; margin-top: 20px; font-weight: 600; word-break: break-all; }
-          .ñami { color: ${qrColor}; font-size: 14px; font-weight: 800; margin-top: 14px; letter-spacing: 0.08em; }
+          .nami { color: ${qrColor}; font-size: 14px; font-weight: 800; margin-top: 14px; letter-spacing: 0.08em; }
           @media print { body { background: #fff; } .card { box-shadow: none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
@@ -219,7 +219,7 @@ export default function QRPage() {
           <p class="sub">Escanea para ver el menú</p>
           <div class="qr">${el.innerHTML}</div>
           <p class="url">${url.replace(/^https?:\/\//, '')}</p>
-          <p class="ñami">ÑAMI</p>
+          <p class="nami">nami</p>
         </div>
         <script>window.onload=function(){window.print();setTimeout(function(){window.close();},250);}<\/script>
       </body>
@@ -395,7 +395,7 @@ export default function QRPage() {
                     {url.replace(/^https?:\/\//, '')}
                   </p>
                   <p className="mt-2 text-xs font-black tracking-widest" style={{ color: qrColor }}>
-                    ÑAMI
+                    nami
                   </p>
                 </motion.div>
 

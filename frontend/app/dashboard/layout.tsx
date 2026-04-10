@@ -71,7 +71,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           style={{ paddingTop: 'max(1.5rem, var(--safe-top))' }}
         >
           <Link href="/" className="font-display text-2xl font-black tracking-tighter text-primary leading-none">
-            ÑAMI
+            nami
           </Link>
           <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-n-500">Mi restaurante</p>
         </div>

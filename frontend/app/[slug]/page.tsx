@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { RestaurantContent } from './restaurant-content';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://ñami.app';
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://nami.app';
 
 async function getRestaurant(slug: string) {
   try {
@@ -26,10 +26,10 @@ export async function generateMetadata({
   const restaurant = await getRestaurant(slug);
 
   if (!restaurant) {
-    return { title: 'Restaurante no encontrado — ÑAMI' };
+    return { title: 'Restaurante no encontrado — nami' };
   }
 
-  const title = `${restaurant.name} — Menú y pedidos | ÑAMI`;
+  const title = `${restaurant.name} — Menú y pedidos | nami`;
   const description = restaurant.description
     ? `${restaurant.description.slice(0, 150)} — Pide directo por WhatsApp sin comisiones.`
     : `Descubre el menú de ${restaurant.name} en Yumbo. Pide directo por WhatsApp.`;
@@ -44,7 +44,7 @@ export async function generateMetadata({
       title: restaurant.name,
       description,
       url,
-      siteName: 'ÑAMI',
+      siteName: 'nami',
       type: 'website',
       images: [{ url: image, width: 1200, height: 630, alt: restaurant.name }],
       locale: 'es_CO',

@@ -119,7 +119,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
   useEffect(() => {
     const name = restaurant.fontFamily?.trim();
     if (!name || !GOOGLE_FONT_NAMES.has(name)) return;
-    const id = `ñami-font-${name.replace(/\s+/g, '-')}`;
+    const id = `nami-font-${name.replace(/\s+/g, '-')}`;
     if (document.getElementById(id)) return;
     const link = document.createElement('link');
     link.id = id;
@@ -240,7 +240,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
             <ShareButton
               url={shareUrl}
               title={restaurant.name}
-              text={`Mira ${restaurant.name} en ÑAMI`}
+              text={`Mira ${restaurant.name} en nami`}
               className="flex h-10 w-10 shrink-0 items-center justify-center text-gray-800"
             />
             <FavoriteButton

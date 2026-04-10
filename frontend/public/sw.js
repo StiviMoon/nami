@@ -1,4 +1,4 @@
-/* ÑAMI — Service worker mínimo: cumple criterio de fetch handler para instalación PWA en Chromium. */
+/* nami — Service worker mínimo: cumple criterio de fetch handler para instalación PWA en Chromium. */
 
 self.addEventListener('install', () => {
   self.skipWaiting();

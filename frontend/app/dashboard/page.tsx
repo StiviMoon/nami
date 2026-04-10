@@ -207,7 +207,7 @@ export default function DashboardPage() {
               </div>
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                 <code className="bg-n-50 border border-n-100 px-4 py-2.5 rounded-xl text-sm flex-1 truncate text-n-600 font-mono">
-                  {typeof window !== 'undefined' ? window.location.origin : 'ñami.app'}/{restaurant.slug}
+                  {typeof window !== 'undefined' ? window.location.origin : 'nami.app'}/{restaurant.slug}
                 </code>
                 <div className="flex gap-2">
                   <Button

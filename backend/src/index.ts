@@ -18,7 +18,7 @@ const PORT = process.env.PORT || 8001;
 const isProd = process.env.NODE_ENV === 'production';
 
 // --- Security ---
-// Permitir que el front en otro dominio (p. ej. Vercel / ñami.app) lea respuestas fetch();
+// Permitir que el front en otro dominio (p. ej. Vercel / nami.app) lea respuestas fetch();
 // el valor por defecto de Helmet es same-origin y rompe llamadas cross-origin aunque CORS esté bien.
 app.use(
   helmet({
@@ -82,7 +82,7 @@ app.use('/api/admin', adminRouter);
 app.use(errorHandler);
 
 app.listen(Number(PORT), '0.0.0.0', () => {
-  console.log(`✅ ÑAMI API running → http://0.0.0.0:${PORT} [${isProd ? 'production' : 'development'}]`);
+  console.log(`✅ nami API running → http://0.0.0.0:${PORT} [${isProd ? 'production' : 'development'}]`);
 });
 
 export default app;

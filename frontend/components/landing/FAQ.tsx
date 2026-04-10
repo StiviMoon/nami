@@ -6,9 +6,9 @@ import { FadeIn } from '@/components/motion';
 import { Plus } from 'lucide-react';
 
 const faqs = [
-  { q: '¿ÑAMI cobra comisión por pedido?', a: 'No. ÑAMI no cobra por pedido ni retiene dinero. El restaurante recibe directamente por WhatsApp y cobra como prefiera.' },
+  { q: '¿nami cobra comisión por pedido?', a: 'No. nami no cobra por pedido ni retiene dinero. El restaurante recibe directamente por WhatsApp y cobra como prefiera.' },
   { q: '¿Cómo recibo los pedidos?', a: 'Los clientes envían su pedido por WhatsApp directamente a tu número. Tú confirmas, preparas y despachas.' },
-  { q: '¿Necesito descargar una app?', a: 'No. ÑAMI funciona desde el navegador. Solo necesitas un celular con WhatsApp.' },
+  { q: '¿Necesito descargar una app?', a: 'No. nami funciona desde el navegador. Solo necesitas un celular con WhatsApp.' },
   { q: '¿Puedo cambiar mi menú en cualquier momento?', a: 'Sí. Desde tu dashboard puedes agregar, editar o desactivar items cuando quieras.' },
   { q: '¿En qué ciudades está disponible?', a: 'Actualmente en Yumbo, Valle del Cauca. Pronto expandiremos a Palmira y Cali.' },
 ];

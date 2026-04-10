@@ -35,7 +35,7 @@ const forRestaurants = [
   {
     icon: MapPin,
     title: 'Visibilidad total',
-    desc: 'Aparece en el feed de ÑAMI. Clientes nuevos te encuentran todos los días sin esfuerzo.',
+    desc: 'Aparece en el feed de nami. Clientes nuevos te encuentran todos los días sin esfuerzo.',
     bg: 'bg-primary/5',
     iconBg: 'bg-primary/10 text-primary',
   },
@@ -49,7 +49,7 @@ const forRestaurants = [
   {
     icon: BarChart3,
     title: 'Cero comisiones',
-    desc: 'Tú recibes el pedido, tú cobras, tú manejas al cliente. ÑAMI no se queda con nada.',
+    desc: 'Tú recibes el pedido, tú cobras, tú manejas al cliente. nami no se queda con nada.',
     bg: 'bg-emerald-50',
     iconBg: 'bg-emerald-100 text-emerald-600',
   },

@@ -90,7 +90,7 @@ export default function FeedPage() {
             <div className="flex items-center justify-between h-14 gap-3">
               <Link href="/" className="shrink-0 flex items-center gap-1.5">
                 <span className="font-display text-2xl font-black tracking-tighter text-n-900 leading-none">
-                  ÑAMI
+                  nami
                 </span>
                 <span className="text-primary text-2xl font-black leading-none">!</span>
               </Link>

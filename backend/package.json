@@ -1,7 +1,7 @@
 {
-  "name": "@ñami/backend",
+  "name": "@nami/backend",
   "version": "1.0.0",
-  "description": "ÑAMI Backend API",
+  "description": "nami Backend API",
   "private": true,
   "scripts": {
     "dev": "ts-node-dev --transpile-only --respawn src/index.ts",

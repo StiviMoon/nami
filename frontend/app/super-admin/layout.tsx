@@ -96,7 +96,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
           style={{ paddingTop: 'max(1.5rem, var(--safe-top))' }}
         >
           <Link href="/super-admin" className="font-display text-2xl font-bold text-[#B088C9]">
-            ÑAMI
+            nami
           </Link>
           <p className="mt-1 text-xs text-n-400">Super Admin</p>
         </div>
@@ -154,7 +154,7 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
         <div className="flex h-14 shrink-0 items-center justify-between gap-3 px-4 md:px-6">
           <div className="flex min-w-0 items-center gap-2 md:gap-3">
             <Link href="/super-admin" className="font-display text-lg font-bold text-[#B088C9] md:hidden">
-              ÑAMI
+              nami
             </Link>
             <span className="text-n-300 md:hidden" aria-hidden>|</span>
             <p className="truncate text-base font-semibold text-n-900 md:text-lg">{pageTitle}</p>

@@ -355,7 +355,7 @@ router.post('/upload-url', async (req: Request, res: Response, next: NextFunctio
 
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `restaurants/${req.user.restaurantId}/${Date.now()}-${safeName}`;
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'ñami-uploads';
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'nami-uploads';
     await ensureBucketExists(bucket);
 
     const { data, error } = await supabaseAdmin.storage

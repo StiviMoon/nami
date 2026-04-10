@@ -1,8 +1,8 @@
-# 🚀 ÑAMI — Quick Start (2 horas)
+# 🚀 nami — Quick Start (2 horas)
 
 **Versión:** 3.0
 **Fecha:** 26 marzo 2026
-**Objetivo:** Tener ÑAMI corriendo en máximo 2 horas
+**Objetivo:** Tener nami corriendo en máximo 2 horas
 
 ---
 
@@ -23,11 +23,11 @@ Resultado: Landing funcionando + API con autenticación
 
 ```bash
 # Opción A: Si tienes un repo existente
-cd ñami
+cd nami
 git pull
 
 # Opción B: Crear desde cero
-mkdir ñami && cd ñami
+mkdir nami && cd nami
 git init
 npm init -y
 mkdir apps
@@ -51,7 +51,7 @@ mkdir -p apps/{web,api,landing}
 ```bash
 cat > package.json << 'EOF'
 {
-  "name": "ñami",
+  "name": "nami",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -110,7 +110,7 @@ pnpm add \
 
 ### 2.3 Copiar landing page (15 min)
 
-Copiar la estructura de componentes del documento `ÑAMI_LANDING_PREMIUM.md`:
+Copiar la estructura de componentes del documento `nami_LANDING_PREMIUM.md`:
 
 ```bash
 mkdir -p src/components
@@ -129,7 +129,7 @@ mkdir -p src/components
 ### 2.4 Actualizar tailwind.config.js (5 min)
 
 ```bash
-# Copiar configuración de ÑAMI_LANDING_PREMIUM.md
+# Copiar configuración de nami_LANDING_PREMIUM.md
 ```
 
 ### 2.5 Crear app/page.tsx
@@ -270,7 +270,7 @@ EOF
 # Inicializar
 npx prisma init
 
-# Copiar schema.prisma del documento ÑAMI_BACKEND_IMPLEMENTACION.md
+# Copiar schema.prisma del documento nami_BACKEND_IMPLEMENTACION.md
 # (la versión simplificada)
 
 # Crear migration

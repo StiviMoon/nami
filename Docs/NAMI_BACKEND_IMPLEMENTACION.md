@@ -1,4 +1,4 @@
-# 🔧 ÑAMI Backend — Guía Completa Implementación
+# 🔧 nami Backend — Guía Completa Implementación
 
 **Versión:** 3.0 Senior Profesional
 **Fecha:** 26 marzo 2026
@@ -98,7 +98,7 @@ npx prisma init
 
 ```env
 # Database
-DATABASE_URL="postgresql://user:password@localhost:5432/ñami_dev"
+DATABASE_URL="postgresql://user:password@localhost:5432/nami_dev"
 
 # Supabase
 SUPABASE_URL="https://xxx.supabase.co"
@@ -127,7 +127,7 @@ REDIS_URL="redis://localhost:6379"
 
 # Email (SendGrid)
 SENDGRID_API_KEY="SG.xxx"
-SENDGRID_FROM_EMAIL="no-reply@ñami.app"
+SENDGRID_FROM_EMAIL="no-reply@nami.app"
 
 # SMS (Twilio)
 TWILIO_ACCOUNT_SID="AC_xxx"
@@ -139,7 +139,7 @@ MAX_FILE_SIZE=10485760  # 10MB
 ALLOWED_FILE_TYPES="image/jpeg,image/png,image/webp"
 
 # CORS
-ALLOWED_ORIGINS="http://localhost:3001,http://localhost:3002,https://ñami.app"
+ALLOWED_ORIGINS="http://localhost:3001,http://localhost:3002,https://nami.app"
 
 # Logging
 LOG_LEVEL="info"
@@ -1167,7 +1167,7 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_DB: ñami_dev
+      POSTGRES_DB: nami_dev
       POSTGRES_PASSWORD: postgres
     ports:
       - "5432:5432"
@@ -1186,7 +1186,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/ñami_dev"
+      DATABASE_URL: "postgresql://postgres:postgres@postgres:5432/nami_dev"
       REDIS_URL: "redis://redis:6379"
     depends_on:
       - postgres
@@ -1208,7 +1208,7 @@ volumes:
 
 services:
   - type: web
-    name: ñami-api
+    name: nami-api
     env: node
     plan: standard
     buildCommand: npm install && npm run build && npx prisma migrate deploy

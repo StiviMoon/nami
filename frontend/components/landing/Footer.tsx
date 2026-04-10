@@ -19,7 +19,7 @@ export function Footer() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 sm:gap-10 mb-10 md:mb-12">
           {/* Brand */}
           <div>
-            <Link href="/" className="font-display font-bold text-white text-2xl">ÑAMI</Link>
+            <Link href="/" className="font-display font-bold text-white text-2xl">nami</Link>
             <p className="text-sm mt-3 leading-relaxed text-n-500 max-w-xs">
               La forma más fácil de descubrir y pedir comida en Yumbo, Colombia.
             </p>
@@ -43,7 +43,7 @@ export function Footer() {
         </div>
 
         <div className="border-t border-n-800 pt-8 flex flex-col sm:flex-row justify-between items-center gap-4">
-          <p className="text-xs text-n-600">© 2026 ÑAMI. Hecho con amor en Yumbo, Colombia.</p>
+          <p className="text-xs text-n-600">© 2026 nami. Hecho con amor en Yumbo, Colombia.</p>
           <p className="text-xs text-n-600">Todos los derechos reservados.</p>
         </div>
       </div>

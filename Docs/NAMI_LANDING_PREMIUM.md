@@ -1,4 +1,4 @@
-# 🎨 ÑAMI Landing Page — Premium v3.0
+# 🎨 nami Landing Page — Premium v3.0
 
 **Versión:** 3.0 Professional Design
 **Fecha:** 26 marzo 2026
@@ -58,7 +58,7 @@ export function Navbar() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group">
           <div className="text-2xl font-bold bg-gradient-to-r from-orange-500 to-orange-600 bg-clip-text text-transparent group-hover:from-orange-600 group-hover:to-orange-700 transition-all">
-            🍔 ÑAMI
+            🍔 nami
           </div>
           <span className="hidden sm:inline text-sm font-medium text-slate-600 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-slate-200 transition-colors">
             Comida real. Sin intermediarios.
@@ -213,7 +213,7 @@ export function Hero() {
           variants={item}
           className="text-xl md:text-2xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed"
         >
-          ÑAMI conecta clientes reales con restaurantes reales.
+          nami conecta clientes reales con restaurantes reales.
           <br />
           <span className="text-slate-900 dark:text-white font-semibold">
             Ordena directo por WhatsApp. Sin comisión. Sin demoras.
@@ -289,7 +289,7 @@ export function ProblemSolution() {
   ]
 
   const solutions = [
-    { icon: '✨', text: 'ÑAMI cobra 0% (o 2% en Pro)' },
+    { icon: '✨', text: 'nami cobra 0% (o 2% en Pro)' },
     { icon: '📲', text: 'Una app. Todo lo que necesitas' },
     { icon: '🌍', text: 'Actualización en tiempo real' },
     { icon: '📊', text: 'Datos reales de tus clientes' },
@@ -422,7 +422,7 @@ export function Features() {
             Tres cosas simples. Muy poderosas.
           </h2>
           <p className="text-xl text-slate-600 dark:text-slate-400">
-            ÑAMI es minimalista por diseño. La complejidad queda oculta.
+            nami es minimalista por diseño. La complejidad queda oculta.
           </p>
         </motion.div>
 
@@ -630,7 +630,7 @@ import { Star } from 'lucide-react'
 
 const testimonials = [
   {
-    quote: 'Antes de ÑAMI hacía $500k al mes. Ahora hago $1.2M. Sin Rappi.',
+    quote: 'Antes de nami hacía $500k al mes. Ahora hago $1.2M. Sin Rappi.',
     author: 'Carlos M.',
     role: 'Dueño, El Rincón Paisa',
     avatar: '👨‍💼',
@@ -644,7 +644,7 @@ const testimonials = [
     rating: 5,
   },
   {
-    quote: 'ÑAMI me mostró mis clientes reales. Cambió cómo trabajo.',
+    quote: 'nami me mostró mis clientes reales. Cambió cómo trabajo.',
     author: 'Juan P.',
     role: 'Dueño, Pizzería Don Juan',
     avatar: '👨‍🍳',
@@ -666,7 +666,7 @@ export function Testimonials() {
             Lo que dicen
           </h2>
           <p className="text-xl text-slate-600 dark:text-slate-400">
-            Historias reales de restaurantes que crecen con ÑAMI.
+            Historias reales de restaurantes que crecen con nami.
           </p>
         </motion.div>
 
@@ -915,7 +915,7 @@ import { ChevronDown } from 'lucide-react'
 
 const faqs = [
   {
-    question: '¿Cuándo llega ÑAMI a mi ciudad?',
+    question: '¿Cuándo llega nami a mi ciudad?',
     answer: 'Estamos en fase de piloto en Yumbo, Palmira y Cali. Pronto llega a más ciudades. Registra tu restaurante para acceso prioritario.',
   },
   {
@@ -928,11 +928,11 @@ const faqs = [
   },
   {
     question: '¿Tengo que cambiar mi forma de trabajar?',
-    answer: 'No. ÑAMI se adapta a ti. Sigues trabajando igual. Solo apareces en un lugar donde más gente te encuentra.',
+    answer: 'No. nami se adapta a ti. Sigues trabajando igual. Solo apareces en un lugar donde más gente te encuentra.',
   },
   {
     question: '¿Qué pasa con mis datos?',
-    answer: 'Tus datos y los de tus clientes son privados. ÑAMI es un puente, no un controlador. Tú eres dueño de tu relación con el cliente.',
+    answer: 'Tus datos y los de tus clientes son privados. nami es un puente, no un controlador. Tú eres dueño de tu relación con el cliente.',
   },
 ]
 
@@ -952,7 +952,7 @@ export function FAQ() {
             Preguntas frecuentes
           </h2>
           <p className="text-xl text-slate-600 dark:text-slate-400">
-            Todo lo que necesitas saber sobre ÑAMI.
+            Todo lo que necesitas saber sobre nami.
           </p>
         </motion.div>
 
@@ -1028,7 +1028,7 @@ export function Footer() {
         >
           <h3 className="text-3xl font-bold">¿Listo para crecer?</h3>
           <p className="text-slate-400 max-w-2xl mx-auto">
-            Únete a los restaurantes que ya están usando ÑAMI
+            Únete a los restaurantes que ya están usando nami
           </p>
           <a href="#contact" className="btn-primary inline-block">
             Solicitar acceso →
@@ -1040,7 +1040,7 @@ export function Footer() {
             
             {/* Brand */}
             <div>
-              <h4 className="text-2xl font-bold mb-4">🍔 ÑAMI</h4>
+              <h4 className="text-2xl font-bold mb-4">🍔 nami</h4>
               <p className="text-slate-400 text-sm">
                 Comida real. Sin intermediarios.
               </p>
@@ -1078,7 +1078,7 @@ export function Footer() {
           {/* Social & Copyright */}
           <div className="border-t border-slate-800 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-400">
-              © 2026 ÑAMI. Hecho con ❤️ en Colombia.
+              © 2026 nami. Hecho con ❤️ en Colombia.
             </p>
             <div className="flex gap-4">
               {[

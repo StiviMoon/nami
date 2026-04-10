@@ -37,7 +37,7 @@ export default function SuperAdminDashboard() {
       <div className="space-y-8">
         <FadeIn>
           <h1 className="text-3xl font-display font-bold text-n-900">Panel de Control</h1>
-          <p className="text-n-500 mt-1">Vista general de la plataforma ÑAMI</p>
+          <p className="text-n-500 mt-1">Vista general de la plataforma nami</p>
         </FadeIn>
 
         {/* Stats Grid */}

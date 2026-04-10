@@ -1,4 +1,4 @@
-# ÑAMI — Definición del Proyecto (Fase 2)
+# nami — Definición del Proyecto (Fase 2)
 
 **Versión:** 2.0 Producto Real
 **Fecha:** 26 marzo 2026
@@ -6,15 +6,15 @@
 
 ---
 
-## 1. Qué es ÑAMI
+## 1. Qué es nami
 
-ÑAMI es una plataforma web que responde a una pregunta diaria simple: **"¿Qué hay de comer hoy en Yumbo?"**
+nami es una plataforma web que responde a una pregunta diaria simple: **"¿Qué hay de comer hoy en Yumbo?"**
 
 Conecta dos audiencias:
 - **Clientes con hambre:** Descubren restaurantes locales, ven el menú, construyen un pedido y lo envían por WhatsApp.
 - **Restaurantes locales:** Publican su menú una sola vez, aparecen en el feed, y reciben pedidos directamente en WhatsApp — sin intermediarios, sin comisiones.
 
-**Diferencial:** ÑAMI es un puente, no un controlador. El restaurante conserva el 100% de la relación con el cliente.
+**Diferencial:** nami es un puente, no un controlador. El restaurante conserva el 100% de la relación con el cliente.
 
 ---
 
@@ -30,7 +30,7 @@ Conecta dos audiencias:
 
 **Flujo:**
 ```
-Abre ÑAMI → Feed de restaurantes
+Abre nami → Feed de restaurantes
   → Filtra por "Hamburguesas" (ej.)
   → Toca "El Rincón Paisa"
   → Ve categorías (Platos, Bebidas, Postres)
@@ -46,7 +46,7 @@ Abre ÑAMI → Feed de restaurantes
 - Configura su perfil: nombre, foto, descripción, dirección, horario, WhatsApp, categoría
 - Organiza su menú en categorías (ej: "Platos principales", "Bebidas", "Postres")
 - Agrega items (nombre, precio, foto, descripción, toggle activo/inactivo)
-- Obtiene un link único: `ñami.app/el-rincon-paisa`
+- Obtiene un link único: `nami.app/el-rincon-paisa`
 - Descarga un QR para imprimir en la puerta/mesa (según plan)
 - Ver: métricas básicas o avanzadas (según plan)
 
@@ -88,7 +88,7 @@ Entra a dashboard → Login Supabase
 ### 3.4 Mensaje WhatsApp pregenerado
 El mensaje que se abre en WhatsApp:
 ```
-Hola! Hice un pedido desde ÑAMI 🍽️
+Hola! Hice un pedido desde nami 🍽️
 
 📍 Restaurante: El Rincón Paisa
 🛒 Pedido:
@@ -139,7 +139,7 @@ Hola! Hice un pedido desde ÑAMI 🍽️
 
 ### 4.5 Link y QR
 - Ruta: `/dashboard/qr`
-- Muestra: URL del restaurante (`ñami.app/el-rincon-paisa`)
+- Muestra: URL del restaurante (`nami.app/el-rincon-paisa`)
 - Botón copiar al portapapeles
 - QR generado (qrcode.js)
 - Botón descargar QR (solo Plan Pro)
@@ -156,7 +156,7 @@ Hola! Hice un pedido desde ÑAMI 🍽️
 | **Precio** | $0 | $29.900/mes |
 | **Máx items en menú** | 10 | Ilimitado |
 | **Perfil en feed** | Básico | Destacado (aparece primero) |
-| **Link propio** | `ñami.app/slug` | `ñami.app/slug` |
+| **Link propio** | `nami.app/slug` | `nami.app/slug` |
 | **QR descargable** | ❌ | ✅ |
 | **Métricas** | Ninguna | Visitantes, platos populares |
 | **Prioridad en búsqueda** | Normal | Alta |
@@ -186,7 +186,7 @@ Explícitamente fuera de Fase 2:
 
 ### 7.1 Al cliente
 - Éxito al agregar item: Toast breve "Agregado al carrito"
-- Al abrir WhatsApp: Nada en ÑAMI (WhatsApp se abre, listo)
+- Al abrir WhatsApp: Nada en nami (WhatsApp se abre, listo)
 
 ### 7.2 Al restaurante
 - Hoy: Recibe el mensaje en WhatsApp (texto pregenerado del cliente)

@@ -87,7 +87,7 @@ export default function PendingPage() {
 
         <div className="w-full max-w-md relative z-10">
           <div className="text-center mb-8">
-            <span className="text-3xl font-display font-bold text-primary">ÑAMI</span>
+            <span className="text-3xl font-display font-bold text-primary">nami</span>
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-sm border border-n-100 text-center">
@@ -162,7 +162,7 @@ export default function PendingPage() {
                 )}
 
                 <a
-                  href="https://wa.me/573000000000?text=Hola,%20mi%20solicitud%20fue%20rechazada%20en%20ÑAMI"
+                  href="https://wa.me/573000000000?text=Hola,%20mi%20solicitud%20fue%20rechazada%20en%20nami"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -196,7 +196,7 @@ export default function PendingPage() {
                 </div>
 
                 <a
-                  href="https://wa.me/573000000000?text=Hola,%20mi%20cuenta%20está%20suspendida%20en%20ÑAMI"
+                  href="https://wa.me/573000000000?text=Hola,%20mi%20cuenta%20está%20suspendida%20en%20nami"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

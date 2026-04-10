@@ -48,7 +48,7 @@ export function ContactContent({ plan: initialPlan, source: initialSource }: Con
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const text = [
-      'Hola, equipo ÑAMI.',
+      'Hola, equipo nami.',
       '',
       `Soy ${form.name} de *${form.restaurant}*.`,
       `Me interesa el plan: *${plan.toUpperCase()}*.`,
@@ -79,7 +79,7 @@ export function ContactContent({ plan: initialPlan, source: initialSource }: Con
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <Link href="/" className="text-2xl font-black italic tracking-tighter text-gray-900">
-              ÑAMI <span className="text-[#E85D04]">!</span>
+              nami <span className="text-[#E85D04]">!</span>
             </Link>
           </div>
         </header>
