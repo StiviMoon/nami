@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect, useLayoutEffect } from 'react';
+import { useState, useLayoutEffect, useMemo, type ElementType } from 'react';
+import Link from 'next/link';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useMyRestaurant } from '@/hooks/useMyRestaurant';
 import { api } from '@/lib/api';
@@ -12,14 +13,35 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { PageTransition, FadeIn, StaggerContainer, StaggerItem } from '@/components/motion';
+import { motion } from 'framer-motion';
 import {
-  Save, ImagePlus, MapPin, Palette, Type, LayoutGrid, LayoutList,
-  Instagram, Globe, Clock, MessageCircle, Store, Upload, CheckCircle2, Copy,
+  Save,
+  ImagePlus,
+  MapPin,
+  Palette,
+  Type,
+  LayoutGrid,
+  LayoutList,
+  Instagram,
+  Globe,
+  Clock,
+  MessageCircle,
+  Store,
+  Upload,
+  CheckCircle2,
+  Copy,
+  ExternalLink,
+  ChevronRight,
+  Truck,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { parseDeliveryZones } from '@/lib/delivery-zones';
 import { compressImage } from '@/lib/image-compress';
 import { RestaurantLocationMap } from '@/components/web/RestaurantLocationMap';
 
@@ -42,7 +64,34 @@ const FONTS = [
   { value: 'Nunito', label: 'Nunito' },
   { value: 'Raleway', label: 'Raleway' },
   { value: 'Lora', label: 'Lora' },
-];
+] as const;
+
+const THEME_PRESETS = [
+  { value: 'SUNSET', label: 'Sunset — naranja cálido' },
+  { value: 'FOREST', label: 'Forest — verde natural' },
+  { value: 'OCEAN', label: 'Ocean — azul fresco' },
+  { value: 'BERRY', label: 'Berry — morado' },
+  { value: 'MONO', label: 'Mono — neutro elegante' },
+] as const;
+
+const MENU_STYLES = [
+  { value: 'ROUNDED', label: 'Rounded — bordes redondeados' },
+  { value: 'SOFT', label: 'Soft — sombra suave' },
+  { value: 'MINIMAL', label: 'Minimal — limpio' },
+] as const;
+
+const FONT_DEFAULT = '__font_default__';
+
+const SECTION_LINKS = [
+  { id: 'perfil-basico', label: 'Datos' },
+  { id: 'perfil-envio', label: 'Envío' },
+  { id: 'perfil-imagenes', label: 'Imágenes' },
+  { id: 'perfil-visual', label: 'Estilo' },
+  { id: 'perfil-redes', label: 'Redes' },
+  { id: 'perfil-mapa', label: 'Mapa' },
+  { id: 'perfil-horarios', label: 'Horarios' },
+  { id: 'perfil-estado', label: 'Estado' },
+] as const;
 
 interface ScheduleDay {
   open: string;
@@ -100,12 +149,37 @@ function numOrNull(v: unknown): number | null {
   return null;
 }
 
-function SectionHeader({ icon: Icon, title }: { icon: React.ElementType; title: string }) {
+function ProfileSection({
+  id,
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  id: string;
+  icon: ElementType;
+  title: string;
+  description?: string;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex items-center gap-2 pb-2 border-b border-n-100">
-      <Icon className="w-4 h-4 text-primary" />
-      <p className="text-xs font-semibold text-n-500 uppercase tracking-wide">{title}</p>
-    </div>
+    <section
+      id={id}
+      className="scroll-mt-8 overflow-hidden rounded-3xl border-2 border-n-200/85 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.045)]"
+    >
+      <div className="border-b border-n-100 bg-linear-to-br from-primary/10 via-white to-n-50/90 px-4 py-4 sm:px-6 sm:py-5">
+        <div className="flex items-start gap-3 sm:gap-4">
+          <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-primary/12 text-primary shadow-sm shadow-primary/8">
+            <Icon className="h-5 w-5" aria-hidden />
+          </span>
+          <div className="min-w-0 pt-0.5">
+            <h2 className="font-display text-lg font-black tracking-tight text-n-900 sm:text-xl">{title}</h2>
+            {description ? <p className="mt-1 text-sm leading-relaxed text-n-500">{description}</p> : null}
+          </div>
+        </div>
+      </div>
+      <div className="space-y-5 p-4 sm:space-y-6 sm:p-6">{children}</div>
+    </section>
   );
 }
 
@@ -157,9 +231,29 @@ export default function PerfilPage() {
     facebook: '',
     latitude: null as number | null,
     longitude: null as number | null,
+    deliveryZones: [] as { name: string; price: number }[],
   });
 
   const { data, isLoading } = useMyRestaurant();
+
+  const completeness = useMemo(() => {
+    if (!data) return 0;
+    const r = data;
+    const fields = [
+      !!r.name,
+      !!r.description,
+      !!r.address,
+      !!r.whatsapp,
+      !!r.logoUrl,
+      !!r.coverUrl,
+      numOrNull(r.latitude) != null && numOrNull(r.longitude) != null,
+      !!(r.instagram || r.facebook || r.tiktok),
+      !!r.schedule,
+    ];
+    return Math.round((fields.filter(Boolean).length / fields.length) * 100);
+  }, [data]);
+
+  const publicSlug = typeof data?.slug === 'string' ? data.slug : undefined;
 
   // useLayoutEffect: hidratar antes del paint; el mapa solo monta después (mapReady) con coords ya en el formulario
   useLayoutEffect(() => {
@@ -176,8 +270,9 @@ export default function PerfilPage() {
       category: r.category || '',
       logoUrl: r.logoUrl || '',
       coverUrl: r.coverUrl || '',
-      themePreset: r.themePreset || 'SUNSET',
-      menuStyle: r.menuStyle || 'ROUNDED',
+      themePreset:
+        (r.themePreset && THEME_PRESETS.some((t) => t.value === r.themePreset) ? r.themePreset : null) || 'SUNSET',
+      menuStyle: (r.menuStyle && MENU_STYLES.some((m) => m.value === r.menuStyle) ? r.menuStyle : null) || 'ROUNDED',
       isClosed: r.isClosed || false,
       primaryColor: r.primaryColor || '',
       secondaryColor: r.secondaryColor || '',
@@ -189,6 +284,7 @@ export default function PerfilPage() {
       facebook: r.facebook || '',
       latitude: numOrNull(r.latitude),
       longitude: numOrNull(r.longitude),
+      deliveryZones: parseDeliveryZones((r as { deliveryZones?: unknown }).deliveryZones),
     });
     setSchedule(parseSchedule(r.schedule));
     setMapReady(true);
@@ -221,6 +317,15 @@ export default function PerfilPage() {
       if (payload[key] === '') payload[key] = null;
     }
     if (payload.menuLayout === 'list') payload.menuLayout = null;
+    if (payload.menuStyle === '' || payload.menuStyle == null) payload.menuStyle = 'ROUNDED';
+    if (payload.themePreset === '' || payload.themePreset == null) payload.themePreset = 'SUNSET';
+    const zones = (form.deliveryZones ?? [])
+      .map((z) => ({
+        name: z.name.trim(),
+        price: Math.max(0, typeof z.price === 'number' && !Number.isNaN(z.price) ? z.price : Number(z.price) || 0),
+      }))
+      .filter((z) => z.name.length > 0);
+    payload.deliveryZones = zones;
     update.mutate(payload);
   };
 
@@ -303,27 +408,104 @@ export default function PerfilPage() {
   if (isLoading) {
     return (
       <div className="space-y-6 overflow-x-hidden">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-40 w-full rounded-3xl" />
+        <Skeleton className="h-12 w-full rounded-2xl" />
+        <div className="grid gap-4">
+          <Skeleton className="h-56 w-full rounded-3xl" />
+          <Skeleton className="h-72 w-full rounded-3xl" />
+          <Skeleton className="h-64 w-full rounded-3xl" />
+        </div>
       </div>
     );
   }
 
   return (
     <PageTransition>
-      <div className="space-y-6">
+      <div className="space-y-8 pb-8">
         <FadeIn>
-          <h1 className="text-3xl font-display font-bold text-n-900">Perfil del restaurante</h1>
-          <p className="text-n-500 mt-1">Personaliza cómo se ve tu restaurante para los clientes</p>
+          <div className="relative overflow-hidden rounded-3xl border-2 border-n-800 bg-linear-to-br from-n-900 via-n-900 to-n-950 p-6 text-white shadow-[0_20px_50px_-12px_rgba(15,23,42,0.35)] sm:p-8">
+            <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-primary/15 blur-2xl" />
+            <div className="pointer-events-none absolute -bottom-24 left-1/3 h-40 w-40 rounded-full bg-primary/10 blur-2xl" />
+            <div className="relative z-10 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Perfil del restaurante</p>
+                <h1 className="mt-1 font-display text-2xl font-black tracking-tight sm:text-3xl">
+                  {data?.name?.trim() || 'Tu restaurante'}
+                </h1>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-n-400">
+                  Aquí defines cómo te ven en el feed y en tu menú público. Los cambios se guardan al pulsar{' '}
+                  <span className="font-semibold text-n-300">Guardar cambios</span> al final.
+                </p>
+                <div className="mt-4 flex flex-wrap items-center gap-2">
+                  {publicSlug ? (
+                    <Link
+                      href={`/${publicSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2.5 text-sm font-bold text-white transition-colors hover:bg-white/15"
+                    >
+                      <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                      Ver menú público
+                      <ChevronRight className="h-4 w-4 opacity-70" aria-hidden />
+                    </Link>
+                  ) : null}
+                  <Link
+                    href="/dashboard"
+                    className="inline-flex items-center gap-1.5 rounded-2xl px-4 py-2.5 text-sm font-semibold text-n-400 transition-colors hover:bg-white/5 hover:text-white"
+                  >
+                    Volver al inicio
+                  </Link>
+                </div>
+              </div>
+              <div className="w-full shrink-0 lg:max-w-xs">
+                <div className="flex items-center justify-between gap-2 text-[10px] font-black uppercase tracking-widest text-n-500">
+                  <span>Perfil completado</span>
+                  <span className="text-primary">{completeness}%</span>
+                </div>
+                <div className="mt-2 h-2 overflow-hidden rounded-full bg-n-800">
+                  <motion.div
+                    className="h-full rounded-full bg-primary"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${completeness}%` }}
+                    transition={{ duration: 0.9, ease: 'easeOut' }}
+                  />
+                </div>
+                {completeness < 100 && (
+                  <p className="mt-2 text-[11px] leading-snug text-n-500">
+                    Completa datos, fotos y ubicación para destacar en el feed.
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <nav
+            className="flex flex-wrap gap-2 border-b border-n-200/90 pb-1 pt-2"
+            aria-label="Ir a sección del perfil"
+          >
+            {SECTION_LINKS.map(({ id, label }) => (
+              <a
+                key={id}
+                href={`#${id}`}
+                className="rounded-full border border-n-200/90 bg-white px-3.5 py-1.5 text-xs font-bold text-n-600 shadow-sm transition-all hover:border-primary/30 hover:bg-primary/5 hover:text-primary"
+              >
+                {label}
+              </a>
+            ))}
+          </nav>
         </FadeIn>
 
-        <form onSubmit={handleSubmit}>
-          <StaggerContainer className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-8">
+          <StaggerContainer className="space-y-8">
 
             {/* === INFO BÁSICA === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
-                <SectionHeader icon={Store} title="Información básica" />
+              <ProfileSection
+                id="perfil-basico"
+                icon={Store}
+                title="Información básica"
+                description="Nombre, descripción y datos de contacto. Aparecen en el feed y en tu página pública."
+              >
                 <Input
                   label="Nombre del restaurante"
                   value={form.name}
@@ -359,17 +541,109 @@ export default function PerfilPage() {
                   placeholder="Hamburguesas, Sushi, Comida Casera..."
                   hint="Ayuda a los usuarios a filtrar en el feed"
                 />
-              </div>
+              </ProfileSection>
+            </StaggerItem>
+
+            <StaggerItem>
+              <ProfileSection
+                id="perfil-envio"
+                icon={Truck}
+                title="Zonas de domicilio"
+                description="Define barrios o zonas con precio fijo de envío. En el pedido el cliente elige la suya y el total incluye el domicilio. Si no agregas ninguna, el flujo sigue como antes (solo dirección y barrio)."
+              >
+                <p className="rounded-2xl border border-n-200/80 bg-n-50/60 px-4 py-3 text-sm text-n-600">
+                  Ejemplo: <strong className="text-n-800">Yumbo</strong> $5.000,{' '}
+                  <strong className="text-n-800">Guabinas</strong> $7.000. Los precios son en pesos colombianos.
+                </p>
+                <div className="space-y-3">
+                  {form.deliveryZones.length === 0 ? (
+                    <p className="text-sm text-n-500">Aún no hay zonas. Pulsa &quot;Agregar zona&quot; para empezar.</p>
+                  ) : (
+                    <ul className="space-y-3">
+                      {form.deliveryZones.map((z, idx) => (
+                        <li
+                          key={idx}
+                          className="flex flex-col gap-3 rounded-2xl border border-n-200/90 bg-white p-4 sm:flex-row sm:items-end"
+                        >
+                          <div className="min-w-0 flex-1 space-y-1.5">
+                            <Label className="text-xs font-bold text-n-500 uppercase tracking-wider">Nombre de la zona</Label>
+                            <Input
+                              value={z.name}
+                              onChange={(e) => {
+                                const next = [...form.deliveryZones];
+                                next[idx] = { ...next[idx], name: e.target.value };
+                                setForm({ ...form, deliveryZones: next });
+                              }}
+                              placeholder="Ej: Yumbo, Centro, Guabinas…"
+                            />
+                          </div>
+                          <div className="w-full sm:w-40 space-y-1.5">
+                            <Label className="text-xs font-bold text-n-500 uppercase tracking-wider">Envío (COP)</Label>
+                            <Input
+                              type="number"
+                              min={0}
+                              step={500}
+                              value={z.price === 0 ? '' : z.price}
+                              onChange={(e) => {
+                                const v = e.target.value;
+                                const num = v === '' ? 0 : Math.max(0, Number(v) || 0);
+                                const next = [...form.deliveryZones];
+                                next[idx] = { ...next[idx], price: num };
+                                setForm({ ...form, deliveryZones: next });
+                              }}
+                              placeholder="5000"
+                            />
+                          </div>
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            className="shrink-0 border-red-200 text-red-600 hover:bg-red-50"
+                            onClick={() =>
+                              setForm({
+                                ...form,
+                                deliveryZones: form.deliveryZones.filter((_, i) => i !== idx),
+                              })
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            Quitar
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        deliveryZones: [...form.deliveryZones, { name: '', price: 0 }],
+                      })
+                    }
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="w-4 h-4" />
+                    Agregar zona
+                  </Button>
+                </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === IMÁGENES === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-6">
-                <SectionHeader icon={ImagePlus} title="Imágenes del restaurante" />
-                <p className="text-sm text-n-600 rounded-xl bg-primary/5 border border-primary/15 px-4 py-3">
-                  <strong className="text-n-800">Cómo funciona:</strong> primero eliges el archivo en tu teléfono o PC,
-                  luego pulsas <strong>Subir a la nube</strong> (eso guarda la imagen en el almacenamiento).
-                  Al final, <strong>Guardar cambios</strong> (abajo) envía todo el perfil, incluidas las URLs nuevas, al servidor.
+              <ProfileSection
+                id="perfil-imagenes"
+                icon={ImagePlus}
+                title="Logo y portada"
+                description="Primero subes cada imagen a la nube; luego guardas el perfil completo para publicar los cambios."
+              >
+                <p className="rounded-2xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-n-700">
+                  <strong className="text-n-900">Flujo:</strong> elegir archivo →{' '}
+                  <strong className="text-n-900">Subir a la nube</strong> → al final{' '}
+                  <strong className="text-n-900">Guardar cambios</strong>.
                 </p>
 
                 {/* Logo */}
@@ -514,49 +788,84 @@ export default function PerfilPage() {
                   placeholder="Ej: ¡Los mejores tacos de Yumbo!"
                   hint="Se muestra sobre el color del banner en tu página pública"
                 />
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
-            {/* === PERSONALIZACIÓN VISUAL === */}
+            {/* === ESTILO MENÚ PÚBLICO === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
-                <SectionHeader icon={Palette} title="Personalización visual" />
-
-                {/* Theme preset */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-n-700">Paleta visual</label>
-                    <select
-                      value={form.themePreset}
-                      onChange={(e) => setForm({ ...form, themePreset: e.target.value })}
-                      className="w-full border border-n-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+              <ProfileSection
+                id="perfil-visual"
+                icon={Palette}
+                title="Estilo del menú público"
+                description="Define cómo se ve tu carta en el enlace y el QR: acentos, tarjetas de platos y disposición."
+              >
+                {publicSlug ? (
+                  <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="text-sm font-medium text-n-700">
+                      Tras guardar, comprueba el resultado en tu página real.
+                    </p>
+                    <Link
+                      href={`/${publicSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex shrink-0 items-center justify-center gap-2 rounded-xl border-2 border-n-200 bg-white px-4 py-2.5 text-sm font-bold text-n-800 shadow-sm transition-all hover:border-primary/35 hover:bg-white"
                     >
-                      <option value="SUNSET">Sunset (naranja)</option>
-                      <option value="FOREST">Forest (verde)</option>
-                      <option value="OCEAN">Ocean (azul)</option>
-                      <option value="BERRY">Berry (morado)</option>
-                      <option value="MONO">Mono (neutro)</option>
-                    </select>
+                      <ExternalLink className="h-4 w-4 text-primary" aria-hidden />
+                      Ver menú público
+                    </Link>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-n-700">Estilo de tarjetas</label>
-                    <select
-                      value={form.menuStyle}
-                      onChange={(e) => setForm({ ...form, menuStyle: e.target.value })}
-                      className="w-full border border-n-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                ) : null}
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-n-800">Paleta de acentos</span>
+                    <p className="text-xs text-n-500">
+                      Tonos para categorías, iconos y detalles cuando no usas color hex propio.
+                    </p>
+                    <Select
+                      value={form.themePreset || 'SUNSET'}
+                      onValueChange={(v) => setForm({ ...form, themePreset: v })}
                     >
-                      <option value="ROUNDED">Rounded</option>
-                      <option value="SOFT">Soft shadow</option>
-                      <option value="MINIMAL">Minimal</option>
-                    </select>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Elige paleta" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {THEME_PRESETS.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>
+                            {t.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-n-800">Forma de las tarjetas</span>
+                    <p className="text-xs text-n-500">Bordes y sombra de cada plato en la lista.</p>
+                    <Select
+                      value={form.menuStyle || 'ROUNDED'}
+                      onValueChange={(v) => setForm({ ...form, menuStyle: v })}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Elige estilo" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {MENU_STYLES.map((m) => (
+                          <SelectItem key={m.value} value={m.value}>
+                            {m.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
-                {/* Custom colors */}
-                <div>
-                  <p className="text-sm font-medium text-n-700 mb-2">Colores personalizados</p>
-                  <p className="text-xs text-n-400 mb-3">Primario para botones/textos y secundario para el banner superior</p>
-                  <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <div className="rounded-2xl border border-n-200/80 bg-n-50/50 p-4 sm:p-5">
+                  <p className="text-sm font-semibold text-n-900">Colores hex (opcional)</p>
+                  <p className="mt-1 text-xs text-n-500">
+                    El <strong className="text-n-700">primario</strong> pinta precios, botón + y pestañas activas. Si lo dejas vacío,
+                    se usan solo los tonos de la paleta. El secundario queda listo para futuros detalles en la cabecera.
+                  </p>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:gap-4">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-10 h-10 rounded-xl border-2 border-n-200 cursor-pointer overflow-hidden relative"
@@ -592,39 +901,56 @@ export default function PerfilPage() {
                       </div>
                     </div>
                     {(form.primaryColor || form.secondaryColor) && (
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="sm"
                         onClick={() => setForm({ ...form, primaryColor: '', secondaryColor: '' })}
-                        className="text-xs text-red-500 hover:text-red-600 self-start sm:self-center"
+                        className="self-start text-red-600 hover:bg-red-50 hover:text-red-700 sm:self-center"
                       >
                         Limpiar colores
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
 
-                {/* Font */}
-                <div className="grid md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-n-700">
-                      <Type className="w-3.5 h-3.5 inline mr-1.5" />
-                      Fuente
-                    </label>
-                    <select
-                      value={form.fontFamily}
-                      onChange={(e) => setForm({ ...form, fontFamily: e.target.value })}
-                      className="w-full border border-n-200 rounded-xl px-4 py-2.5 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                      style={form.fontFamily ? { fontFamily: form.fontFamily } : undefined}
+                <div className="grid gap-5 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-n-800">
+                      <Type className="h-4 w-4 text-primary" aria-hidden />
+                      Tipografía
+                    </span>
+                    <p className="text-xs text-n-500">Se carga desde Google Fonts en la página del menú.</p>
+                    <Select
+                      value={form.fontFamily ? form.fontFamily : FONT_DEFAULT}
+                      onValueChange={(v) =>
+                        setForm({ ...form, fontFamily: v === FONT_DEFAULT ? '' : v })
+                      }
                     >
-                      {FONTS.map((f) => (
-                        <option key={f.value} value={f.value}>{f.label}</option>
-                      ))}
-                    </select>
+                      <SelectTrigger
+                        className="w-full"
+                        style={form.fontFamily ? { fontFamily: form.fontFamily } : undefined}
+                      >
+                        <SelectValue placeholder="Tipografía del menú" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FONTS.map((f) => (
+                          <SelectItem
+                            key={f.value || FONT_DEFAULT}
+                            value={f.value || FONT_DEFAULT}
+                            textValue={f.label}
+                            style={f.value ? { fontFamily: f.value } : undefined}
+                          >
+                            {f.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  {/* Menu layout */}
-                  <div className="space-y-1.5">
-                    <label className="block text-sm font-medium text-n-700">Layout del menú</label>
+                  <div className="space-y-2">
+                    <span className="text-sm font-semibold text-n-800">Disposición de platos</span>
+                    <p className="text-xs text-n-500">Una columna o dos en pantallas anchas.</p>
                     <div className="flex gap-2">
                       <button
                         type="button"
@@ -653,49 +979,17 @@ export default function PerfilPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Vista previa de fuente (menú público) */}
-                <div className="rounded-xl p-4 border border-n-100 bg-n-50">
-                  <p className="text-xs font-medium text-n-500 mb-2">Vista previa de fuente</p>
-                  <div
-                    className="rounded-xl border border-n-200 bg-white p-4 shadow-sm space-y-3"
-                    style={form.fontFamily ? { fontFamily: form.fontFamily } : undefined}
-                  >
-                    <p className="text-lg font-black text-n-900">Tu restaurante</p>
-                    <div className="flex items-center justify-between gap-2 rounded-xl border border-n-100 bg-n-50/80 px-3 py-2">
-                      <span className="text-sm font-semibold text-n-800">Plato de ejemplo</span>
-                      <span className="text-sm font-bold text-primary">$ 15.000</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="w-full rounded-xl py-2.5 text-xs font-black uppercase tracking-wider text-white bg-n-900"
-                    >
-                      Añadir al pedido
-                    </button>
-                  </div>
-                </div>
-
-                {/* Color preview */}
-                {form.primaryColor && (
-                  <div className="rounded-xl p-4 border border-n-100 bg-n-50">
-                    <p className="text-xs font-medium text-n-500 mb-2">Vista previa</p>
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                      <div className="h-10 px-5 rounded-xl text-white text-sm font-bold flex items-center" style={{ backgroundColor: form.primaryColor }}>
-                        Botón primario
-                      </div>
-                      <div className="text-sm font-bold" style={{ color: form.primaryColor }}>
-                        Texto acentuado
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === REDES SOCIALES === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
-                <SectionHeader icon={Globe} title="Redes sociales" />
+              <ProfileSection
+                id="perfil-redes"
+                icon={Globe}
+                title="Redes sociales"
+                description="Opcional. Aparecen en tu ficha para que los clientes te sigan."
+              >
                 <div className="grid md:grid-cols-3 gap-4">
                   <Input
                     label="Instagram"
@@ -720,14 +1014,17 @@ export default function PerfilPage() {
                     hint="Nombre de página o usuario"
                   />
                 </div>
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === UBICACIÓN === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100 space-y-5">
-                <SectionHeader icon={MapPin} title="Ubicación" />
-                <p className="text-xs text-n-400">Los clientes verán qué tan cerca están de tu restaurante</p>
+              <ProfileSection
+                id="perfil-mapa"
+                icon={MapPin}
+                title="Ubicación en el mapa"
+                description="Arrastra el pin o usa tu ubicación. Así el feed puede ordenar restaurantes cercanos."
+              >
                 <div className="grid md:grid-cols-2 gap-4">
                   <Input
                     label="Latitud"
@@ -766,17 +1063,20 @@ export default function PerfilPage() {
                 ) : (
                   <div className="h-56 w-full animate-pulse rounded-xl border border-n-200 bg-n-100 sm:h-72" aria-hidden />
                 )}
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === HORARIOS (Radix / estilo shadcn + inputs nativos type=time) === */}
             <StaggerItem>
-              <div className="rounded-2xl border border-n-100 bg-white p-4 sm:p-6 space-y-4">
-                <SectionHeader icon={Clock} title="Horarios de atención" />
-                <p className="text-xs text-n-500 leading-relaxed -mt-1">
-                  El interruptor usa el patrón accesible de Radix (como shadcn). Las horas usan el{' '}
-                  <strong className="text-n-700">selector nativo</strong> del sistema al tocar el campo
-                  (iOS / Android / escritorio). Guarda con «Guardar cambios».
+              <ProfileSection
+                id="perfil-horarios"
+                icon={Clock}
+                title="Horarios de atención"
+                description="Marca días cerrados o define apertura y cierre. El cliente lo ve en tu menú público."
+              >
+                <p className="text-xs leading-relaxed text-n-500">
+                  Los interruptores son accesibles (Radix). Las horas usan el{' '}
+                  <strong className="text-n-700">selector nativo</strong> del teléfono o del navegador.
                 </p>
                 <Button
                   type="button"
@@ -891,31 +1191,45 @@ export default function PerfilPage() {
                     );
                   })}
                 </div>
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === ESTADO === */}
             <StaggerItem>
-              <div className="bg-white rounded-2xl p-4 sm:p-6 border border-n-100">
-                <div className="flex items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <p className="text-sm font-semibold text-n-800">Restaurante cerrado</p>
-                    <p className="text-xs text-n-500 mt-0.5">Si está cerrado, los clientes verán que no estás recibiendo pedidos</p>
+              <ProfileSection
+                id="perfil-estado"
+                icon={Store}
+                title="Disponibilidad"
+                description="Si marcas como cerrado, los clientes verán que no recibes pedidos en este momento."
+              >
+                <div className="flex flex-col gap-4 rounded-2xl border border-n-200/80 bg-n-50/50 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-bold text-n-900">Modo cerrado</p>
+                    <p className="mt-1 text-xs leading-relaxed text-n-500">
+                      Actívalo cuando no quieras recibir pedidos; tu menú sigue visible.
+                    </p>
                   </div>
                   <Toggle
                     checked={form.isClosed}
                     onChange={(v) => setForm({ ...form, isClosed: v })}
+                    label={form.isClosed ? 'Cerrado a pedidos' : 'Abierto a pedidos'}
                   />
                 </div>
-              </div>
+              </ProfileSection>
             </StaggerItem>
 
             {/* === GUARDAR === */}
             <StaggerItem>
-              <Button type="submit" isLoading={update.isPending} className="w-full md:w-auto">
-                <Save className="w-4 h-4" />
-                Guardar cambios
-              </Button>
+              <div className="sticky bottom-0 z-10 -mx-1 flex flex-col gap-3 rounded-3xl border-2 border-n-200/90 bg-white/95 p-4 shadow-[0_-8px_30px_rgba(15,23,42,0.08)] backdrop-blur-md sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <p className="text-sm text-n-500">
+                  <span className="font-semibold text-n-800">Recuerda:</span> las subidas a la nube no sustituyen guardar el
+                  formulario.
+                </p>
+                <Button type="submit" isLoading={update.isPending} className="w-full shrink-0 sm:w-auto sm:min-w-[200px]">
+                  <Save className="h-4 w-4" />
+                  Guardar cambios
+                </Button>
+              </div>
             </StaggerItem>
 
           </StaggerContainer>

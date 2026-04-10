@@ -44,6 +44,30 @@ h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-display);
 }
 
+/* Botones, enlaces y controles interactivos: cursor explícito */
+button:not(:disabled):not([disabled]),
+a[href],
+summary,
+[role="button"]:not([aria-disabled="true"]),
+[role="switch"]:not([disabled]),
+[role="tab"]:not([aria-disabled="true"]),
+[role="menuitem"]:not([aria-disabled="true"]),
+[role="option"]:not([data-disabled]),
+label[for] {
+  cursor: pointer;
+}
+
+button:disabled,
+button[disabled] {
+  cursor: not-allowed;
+}
+
+input[type="checkbox"]:not(:disabled),
+input[type="radio"]:not(:disabled),
+select:not(:disabled) {
+  cursor: pointer;
+}
+
 @keyframes shimmer {
   100% {
     transform: translateX(100%);

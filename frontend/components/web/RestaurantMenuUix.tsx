@@ -1,27 +1,37 @@
 'use client';
 
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
-import { ArrowLeft, Clock, MapPin, Settings2 } from 'lucide-react';
-import { Instagram, Facebook } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Clock, MapPin, Instagram, Facebook } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
-import { formatPrice } from '@/lib/utils';
 import { formatTodayHoursLabel, isOpenNow, type WeekSchedule } from '@/lib/uix-schedule';
-import { ProductImageCarousel } from '@/components/uix/ProductImageCarousel';
 import { CartModal, CartFloatingBarUix } from '@/components/uix/CartModal';
+import { CategoryTabs } from '@/components/web/CategoryTabs';
+import { RestaurantMenuItemRow, type PublicMenuItem } from '@/components/web/RestaurantMenuItemRow';
 import { ClosedStoreModal } from '@/components/web/ClosedStoreModal';
 import { FavoriteButton } from '@/components/web/FavoriteButton';
 import { ShareButton } from '@/components/web/ShareButton';
-import { getItemBadge } from '@/lib/restaurant-theme';
-import {
-  hasCustomization,
-  normalizeMenuCustomization,
-  buildCartLineId,
-  type MenuExtra,
-} from '@/lib/menu-customization';
+import { normalizeMenuCustomization, buildCartLineId, type MenuExtra } from '@/lib/menu-customization';
 import { CustomizationModal } from '@/components/uix/CustomizationModal';
+import {
+  getCustomThemeStyle,
+  getMenuCardStyleClasses,
+  getThemeClasses,
+} from '@/lib/restaurant-theme';
+import { cn } from '@/lib/utils';
+import { parseDeliveryZones } from '@/lib/delivery-zones';
 
-const ACCENT = '#E85D04';
+const GOOGLE_FONT_NAMES = new Set([
+  'Inter',
+  'Poppins',
+  'Playfair Display',
+  'Montserrat',
+  'Nunito',
+  'Raleway',
+  'Lora',
+]);
+
+const ALL_CATEGORY_ID = '__all__';
 
 type MenuCategory = {
   id: string;
@@ -50,6 +60,14 @@ type Restaurant = {
   instagram?: string | null;
   tiktok?: string | null;
   facebook?: string | null;
+  /** Branding (perfil → se aplica en esta página) */
+  themePreset?: string | null;
+  menuStyle?: string | null;
+  fontFamily?: string | null;
+  primaryColor?: string | null;
+  secondaryColor?: string | null;
+  menuLayout?: string | null;
+  deliveryZones?: unknown;
 };
 
 type Props = {
@@ -62,7 +80,7 @@ type Props = {
 export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Props) {
   const cart = useCart();
   const [cartOpen, setCartOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState(categories[0]?.id || '');
+  const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY_ID);
   const [closedModalOpen, setClosedModalOpen] = useState(false);
   const [customItem, setCustomItem] = useState<{
     id: string;
@@ -79,8 +97,36 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
   }, [restaurant.isClosed]);
 
   useEffect(() => {
-    if (categories[0]?.id) setActiveCategory(categories[0].id);
+    setActiveCategory(ALL_CATEGORY_ID);
   }, [categories]);
+
+  const theme = useMemo(() => getThemeClasses(restaurant.themePreset ?? undefined), [restaurant.themePreset]);
+  const itemCardClass = useMemo(
+    () => getMenuCardStyleClasses(restaurant.menuStyle ?? undefined),
+    [restaurant.menuStyle]
+  );
+  const customVars = useMemo(() => getCustomThemeStyle(restaurant), [restaurant]);
+  const isGrid = restaurant.menuLayout === 'grid';
+  const deliveryZones = useMemo(
+    () => parseDeliveryZones(restaurant.deliveryZones),
+    [restaurant.deliveryZones]
+  );
+
+  const fontFamilyStyle = restaurant.fontFamily?.trim()
+    ? { fontFamily: `"${restaurant.fontFamily.trim()}", system-ui, sans-serif` }
+    : {};
+
+  useEffect(() => {
+    const name = restaurant.fontFamily?.trim();
+    if (!name || !GOOGLE_FONT_NAMES.has(name)) return;
+    const id = `ñami-font-${name.replace(/\s+/g, '-')}`;
+    if (document.getElementById(id)) return;
+    const link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(name)}:wght@400;600;700;800&display=swap`;
+    document.head.appendChild(link);
+  }, [restaurant.fontFamily]);
 
   const addSimple = (item: { id: string; name: string; price: string | number }) => {
     const lineId = buildCartLineId(item.id, [], []);
@@ -97,7 +143,7 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
     );
   };
 
-  const handleAddClick = (item: MenuCategory['items'][number]) => {
+  const handleAddClick = (item: PublicMenuItem) => {
     if (!item.isAvailable) return;
     const normalized = normalizeMenuCustomization(item.customization);
     if (
@@ -120,12 +166,34 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
   const totalItems = cart.items.reduce((sum, i) => sum + i.quantity, 0);
   const todayHours = formatTodayHoursLabel(schedule);
   const activeItems =
-    categories.find((c) => c.id === activeCategory)?.items || [];
+    activeCategory === ALL_CATEGORY_ID
+      ? []
+      : categories.find((c) => c.id === activeCategory)?.items ?? [];
+
+  const activeCategoryName =
+    activeCategory === ALL_CATEGORY_ID
+      ? 'Todo el menú'
+      : categories.find((c) => c.id === activeCategory)?.name ?? 'Menú';
+
+  const tabCategories = useMemo(
+    () => [
+      { id: ALL_CATEGORY_ID, name: 'Todo' },
+      ...categories.map((c) => ({ id: c.id, name: c.name })),
+    ],
+    [categories]
+  );
 
   const shareUrl = typeof window !== 'undefined' ? window.location.href : `/${slug}`;
 
+  const tagLabels = categories.map((c) => c.name).filter(Boolean).slice(0, 6);
+
+  const itemsLayoutClass = isGrid ? 'grid grid-cols-1 gap-4 sm:grid-cols-2' : 'flex flex-col gap-4';
+
   return (
-    <div className="min-h-dvh bg-gray-50 lg:flex lg:min-h-screen font-sans text-gray-900 antialiased">
+    <div
+      className="min-h-dvh bg-gray-50 pb-28 font-sans antialiased"
+      style={{ ...customVars, ...fontFamilyStyle }}
+    >
       <ClosedStoreModal
         isOpen={closedModalOpen}
         onClose={() => setClosedModalOpen(false)}
@@ -133,237 +201,211 @@ export function RestaurantMenuUix({ restaurant, categories, slug, schedule }: Pr
         schedule={schedule ?? undefined}
       />
 
-      <aside className="hidden lg:flex flex-col w-[400px] h-screen bg-white sticky top-0 border-r border-gray-100 p-10 overflow-y-auto">
-        <Link
-          href="/feed"
-          className="flex items-center gap-2 text-gray-400 font-black text-[10px] uppercase mb-10 hover:text-gray-600 transition-colors"
-        >
-          <ArrowLeft size={16} /> Volver
-        </Link>
+      {/* Hero */}
+      <div className="relative h-64 w-full bg-gray-200 sm:h-80">
+        {restaurant.coverUrl ? (
+          <img
+            src={restaurant.coverUrl}
+            alt=""
+            className={`h-full w-full object-cover ${!open ? 'grayscale' : ''}`}
+          />
+        ) : (
+          <div
+            className={cn(
+              'flex h-full w-full items-center justify-center bg-linear-to-br text-6xl opacity-40',
+              theme.header
+            )}
+          >
+            🍽
+          </div>
+        )}
         <div
-          className={`h-48 rounded-[2rem] overflow-hidden mb-6 shadow-xl ${!open ? 'grayscale' : ''}`}
-        >
-          {restaurant.coverUrl ? (
-            <img src={restaurant.coverUrl} alt={restaurant.name} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-100 flex items-center justify-center text-5xl opacity-40">
-              🍽
-            </div>
-          )}
-        </div>
-        <div className="flex items-center gap-2 mb-2">
-          <div className={`w-2 h-2 rounded-full ${open ? 'bg-green-500 animate-pulse' : 'bg-gray-400'}`} />
-          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">
-            {open ? 'Abierto ahora' : 'Cerrado'}
-          </span>
-        </div>
-        <div className="flex items-start justify-between gap-2">
-          <h1 className="text-4xl font-black leading-none tracking-tight text-gray-900">{restaurant.name}</h1>
-        </div>
-        {restaurant.bannerText?.trim() && (
-          <p className="mt-3 text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 leading-relaxed">
-            {restaurant.bannerText.trim()}
-          </p>
-        )}
-        <div className="mt-8 pt-8 border-t border-gray-100 space-y-4">
-          {restaurant.address && (
-            <div className="flex items-start gap-3 text-xs font-bold text-gray-400">
-              <MapPin size={16} className="shrink-0" style={{ color: ACCENT }} /> {restaurant.address}
-            </div>
-          )}
-          <div className="flex items-start gap-3 text-xs font-bold text-gray-400">
-            <Clock size={16} className="shrink-0" style={{ color: ACCENT }} /> {todayHours}
-          </div>
-          {restaurant.description?.trim() && (
-            <p className="text-sm text-gray-500 leading-relaxed pt-1">{restaurant.description}</p>
-          )}
-        </div>
-        {(restaurant.instagram || restaurant.tiktok || restaurant.facebook) && (
-          <div className="flex items-center gap-3 mt-4">
-            {restaurant.instagram && (
-              <a
-                href={`https://instagram.com/${restaurant.instagram}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-pink-500 transition-colors"
-              >
-                <Instagram className="w-4 h-4" />
-              </a>
-            )}
-            {restaurant.tiktok && (
-              <a
-                href={`https://tiktok.com/@${restaurant.tiktok}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-gray-900 transition-colors"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.11v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.35 6.34 6.34 0 006.34-6.34V8.93a8.22 8.22 0 003.76.92V6.4s-.01.29 0 .29z" />
-                </svg>
-              </a>
-            )}
-            {restaurant.facebook && (
-              <a
-                href={`https://facebook.com/${restaurant.facebook}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-gray-400 hover:text-blue-600 transition-colors"
-              >
-                <Facebook className="w-4 h-4" />
-              </a>
-            )}
-          </div>
-        )}
-        <nav className="mt-10 space-y-2 flex-1 min-h-0 overflow-y-auto">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setActiveCategory(cat.id)}
-              className={`w-full text-left px-5 py-3 rounded-xl text-[11px] font-black uppercase transition-all cursor-pointer ${
-                activeCategory === cat.id ? 'bg-orange-50 text-[#E85D04]' : 'text-gray-400 hover:bg-gray-50'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
-        </nav>
-        <div className="mt-auto pt-8 flex items-center gap-2 border-t border-gray-100">
-          <FavoriteButton restaurantId={restaurant.id} />
-          <ShareButton url={shareUrl} title={restaurant.name} text={`Mira ${restaurant.name} en ÑAMI`} />
-        </div>
-      </aside>
+          className={cn('pointer-events-none absolute inset-0 bg-linear-to-br opacity-35', theme.header)}
+          aria-hidden
+        />
+        <div className="absolute inset-0 bg-linear-to-b from-black/40 via-transparent to-black/60" />
 
-      <div className="lg:hidden w-full">
-        <div className="h-48 relative overflow-hidden">
-          {restaurant.coverUrl ? (
-            <img
-              src={restaurant.coverUrl}
-              alt=""
-              className={`w-full h-full object-cover ${!open ? 'grayscale' : ''}`}
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-100" />
-          )}
+        <div
+          className="absolute left-0 right-0 top-0 z-10 flex items-center justify-between p-4"
+          style={{ paddingTop: 'max(1rem, var(--safe-top))' }}
+        >
           <Link
             href="/feed"
-            className="absolute left-4 p-2 bg-white/20 backdrop-blur-md rounded-full text-white top-[max(1rem,var(--safe-top))]"
+            className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-white/90 text-gray-800 shadow-sm backdrop-blur-md transition-colors hover:bg-white"
             aria-label="Volver al feed"
           >
-            <ArrowLeft className="text-white" />
+            <ArrowLeft size={20} />
           </Link>
-          <div className="absolute right-4 flex gap-2 top-[max(1rem,var(--safe-top))]">
-            <FavoriteButton restaurantId={restaurant.id} size="sm" />
-            <ShareButton url={shareUrl} title={restaurant.name} text={`Mira ${restaurant.name} en ÑAMI`} />
+          <div className="flex gap-2">
+            <ShareButton
+              url={shareUrl}
+              title={restaurant.name}
+              text={`Mira ${restaurant.name} en ÑAMI`}
+              className="flex h-10 w-10 shrink-0 items-center justify-center text-gray-800"
+            />
+            <FavoriteButton
+              restaurantId={restaurant.id}
+              size="md"
+              className="flex h-10 w-10 shrink-0 items-center justify-center shadow-sm"
+            />
           </div>
-        </div>
-        <div className="bg-white p-6 -mt-8 relative rounded-t-[2.5rem] shadow-xl">
-          <div className="flex items-start justify-between gap-2">
-            <h1 className="text-3xl font-black leading-none text-gray-900">{restaurant.name}</h1>
-          </div>
-          {restaurant.bannerText?.trim() && (
-            <p className="mt-2 text-[9px] font-black uppercase tracking-widest text-gray-500">
-              {restaurant.bannerText.trim()}
-            </p>
-          )}
-          {restaurant.address && (
-            <div className="mt-3 text-[10px] font-black uppercase text-gray-400">
-              <MapPin size={12} className="inline mr-1" style={{ color: ACCENT }} />
-              {restaurant.address}
-            </div>
-          )}
-          <div className="mt-2 flex items-start gap-1.5 text-[10px] font-bold text-gray-400">
-            <Clock size={12} className="shrink-0 mt-0.5" style={{ color: ACCENT }} />
-            <span>{todayHours}</span>
-          </div>
-          {restaurant.description?.trim() && (
-            <p className="mt-3 text-sm text-gray-500 leading-relaxed line-clamp-4 lg:line-clamp-none">
-              {restaurant.description}
-            </p>
-          )}
-        </div>
-        <div className="sticky top-0 z-30 bg-gray-50/90 backdrop-blur-xl py-3 flex gap-2 overflow-x-auto scrollbar-hide px-4 sm:px-6 border-b border-gray-100 supports-backdrop-filter:bg-gray-50/80">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => setActiveCategory(cat.id)}
-              className={`min-h-11 shrink-0 px-5 py-2.5 rounded-full text-[11px] font-black uppercase whitespace-nowrap transition-all cursor-pointer active:scale-[0.98] ${
-                activeCategory === cat.id ? 'bg-[#E85D04] text-white' : 'bg-white text-gray-400 border border-gray-100'
-              }`}
-            >
-              {cat.name}
-            </button>
-          ))}
         </div>
       </div>
 
-      <main className="flex-1 max-w-4xl mx-auto p-4 sm:p-6 lg:p-12 pb-[calc(8rem+var(--safe-bottom))] lg:pb-32 space-y-5 sm:space-y-6 w-full min-w-0">
-        {activeItems.map((item) => {
-          const photos = [item.imageUrl].filter(Boolean) as string[];
-          const itemBadge = getItemBadge(item.badge);
-          const personalized = hasCustomization(item.customization);
-          return (
-            <article
-              key={item.id}
-              className={`flex flex-row items-center overflow-hidden bg-white rounded-[2rem] border border-gray-100 shadow-sm transition-all hover:shadow-md sm:items-stretch sm:rounded-[2.5rem] ${
-                !item.isAvailable ? 'opacity-60' : ''
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        {/* Tarjeta info */}
+        <div className="relative z-10 -mt-10 rounded-t-[2.5rem] border border-gray-100 bg-white px-6 pb-6 pt-8 shadow-sm sm:-mt-16 sm:rounded-3xl">
+          <h1 className="mb-2 text-2xl font-extrabold text-gray-900 sm:text-3xl">{restaurant.name}</h1>
+
+          {restaurant.bannerText?.trim() && (
+            <p className="mb-3 text-sm italic text-gray-500">&ldquo;{restaurant.bannerText.trim()}&rdquo;</p>
+          )}
+
+          <div className="mb-4 flex flex-wrap items-center gap-3 text-sm text-gray-600">
+            <div
+              className={`flex items-center gap-1 rounded-lg px-2 py-1 font-bold ${
+                open ? 'bg-green-50 text-green-700' : 'bg-rose-50 text-rose-700'
               }`}
             >
-              <div className="relative mx-3 my-3 h-22 w-22 shrink-0 overflow-hidden rounded-2xl ring-1 ring-black/4 min-[400px]:mx-3.5 min-[400px]:my-3.5 min-[400px]:h-28 min-[400px]:w-28 sm:mx-0 sm:my-0 sm:h-56 sm:w-60 sm:rounded-none sm:ring-0 sm:self-start">
-                <ProductImageCarousel photos={photos} itemName={item.name} />
-              </div>
-              <div className="p-4 sm:p-6 flex flex-col justify-between flex-1 min-w-0">
-                <div>
-                  <div className="flex justify-between items-start mb-2 gap-2">
-                    <h4 className="font-black text-lg text-gray-900">{item.name}</h4>
-                    {personalized && (
-                      <Settings2 size={16} className="text-gray-300 shrink-0 mt-0.5" aria-hidden />
-                    )}
-                  </div>
-                  {personalized && (
-                    <span className="inline-block mb-2 text-[9px] font-black uppercase tracking-widest text-[#E85D04] bg-orange-50 px-2 py-0.5 rounded-full">
-                      Personalizable
-                    </span>
-                  )}
-                  {itemBadge && (
-                    <span
-                      className={`mb-2 inline-flex w-fit items-center gap-1 whitespace-nowrap rounded-full border px-2 py-1 text-[10px] font-semibold leading-none ${itemBadge.color}`}
-                    >
-                      {itemBadge.emoji} {itemBadge.label}
-                    </span>
-                  )}
-                  {item.description && (
-                    <p className="text-gray-500 text-xs italic leading-snug">&quot;{item.description}&quot;</p>
-                  )}
+              <span
+                className={`relative inline-flex h-2.5 w-2.5 rounded-full ${open ? 'bg-green-500' : 'bg-rose-500'}`}
+              />
+              <span>{open ? 'Abierto' : 'Cerrado'}</span>
+            </div>
+            <span className="text-gray-300">•</span>
+            <div className="flex items-center gap-1">
+              <Clock size={14} className="text-gray-500" />
+              <span>{todayHours}</span>
+            </div>
+            {restaurant.address && (
+              <>
+                <span className="text-gray-300">•</span>
+                <div className="flex min-w-0 items-start gap-1 text-gray-600">
+                  <MapPin size={14} className={cn('mt-0.5 shrink-0', theme.accent)} />
+                  <span className="line-clamp-2">{restaurant.address}</span>
                 </div>
-                <div className="mt-4 flex justify-between items-center gap-3">
-                  <span className="font-black" style={{ color: ACCENT }}>
-                    {formatPrice(Number(item.price))}
-                  </span>
-                  <button
-                    type="button"
-                    disabled={!item.isAvailable}
-                    onClick={() => handleAddClick(item)}
-                    className={`min-h-11 min-w-30 px-5 py-2.5 text-white text-[10px] font-black rounded-xl uppercase tracking-widest transition-all cursor-pointer touch-manipulation active:scale-[0.98] ${
-                      !item.isAvailable ? 'bg-gray-200 text-gray-400' : 'bg-gray-900 hover:bg-[#E85D04]'
-                    }`}
-                  >
-                    {!item.isAvailable ? 'Agotado' : personalized ? 'Elegir opciones' : 'Añadir'}
-                  </button>
-                </div>
-              </div>
-            </article>
-          );
-        })}
-      </main>
+              </>
+            )}
+          </div>
 
-      <CartFloatingBarUix cartCount={totalItems} total={cart.total()} onOpen={() => setCartOpen(true)} />
+          {tagLabels.length > 0 && (
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              {tagLabels.map((tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600"
+                >
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {restaurant.description?.trim() && (
+            <p className="text-sm leading-relaxed text-gray-600">{restaurant.description}</p>
+          )}
+
+          {(restaurant.instagram || restaurant.tiktok || restaurant.facebook) && (
+            <div className="mt-4 flex items-center gap-3 border-t border-gray-100 pt-4">
+              {restaurant.instagram && (
+                <a
+                  href={`https://instagram.com/${restaurant.instagram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 transition-colors hover:text-pink-500"
+                  aria-label="Instagram"
+                >
+                  <Instagram className="h-5 w-5" />
+                </a>
+              )}
+              {restaurant.tiktok && (
+                <a
+                  href={`https://tiktok.com/@${restaurant.tiktok}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 transition-colors hover:text-gray-900"
+                  aria-label="TikTok"
+                >
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.88-2.88 2.89 2.89 0 012.88-2.88c.28 0 .56.04.82.11v-3.5a6.37 6.37 0 00-.82-.05A6.34 6.34 0 003.15 15.2a6.34 6.34 0 006.34 6.35 6.34 6.34 0 006.34-6.34V8.93a8.22 8.22 0 003.76.92V6.4s-.01.29 0 .29z" />
+                  </svg>
+                </a>
+              )}
+              {restaurant.facebook && (
+                <a
+                  href={`https://facebook.com/${restaurant.facebook}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-400 transition-colors hover:text-blue-600"
+                  aria-label="Facebook"
+                >
+                  <Facebook className="h-5 w-5" />
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+
+        {tabCategories.length > 0 && (
+          <CategoryTabs
+            variant="menu"
+            categories={tabCategories}
+            activeId={activeCategory}
+            onSelect={setActiveCategory}
+            accentBg={theme.accentBg}
+          />
+        )}
+
+        {/* Platillos */}
+        <div className="mt-4 pb-8">
+          {activeCategory === ALL_CATEGORY_ID ? (
+            <div className="flex flex-col gap-10">
+              {categories.map((cat) => (
+                <section key={cat.id} className="scroll-mt-28">
+                  <h2 className="mb-4 text-xl font-bold text-gray-900">{cat.name}</h2>
+                  <div className={itemsLayoutClass}>
+                    {cat.items.map((item) => (
+                      <RestaurantMenuItemRow
+                        key={item.id}
+                        item={item}
+                        onAdd={handleAddClick}
+                        cardClassName={itemCardClass}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          ) : (
+            <>
+              <h2 className="mb-4 text-xl font-bold text-gray-900">{activeCategoryName}</h2>
+              <div className={itemsLayoutClass}>
+                {activeItems.map((item) => (
+                  <RestaurantMenuItemRow
+                    key={item.id}
+                    item={item}
+                    onAdd={handleAddClick}
+                    cardClassName={itemCardClass}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <CartFloatingBarUix
+        variant="whatsapp"
+        cartCount={totalItems}
+        total={cart.total()}
+        onOpen={() => setCartOpen(true)}
+      />
       <CartModal
         isOpen={cartOpen}
         onClose={() => setCartOpen(false)}
         restaurantName={restaurant.name}
         restaurantSlug={slug}
+        deliveryZones={deliveryZones}
       />
       <CustomizationModal
         item={customItem}

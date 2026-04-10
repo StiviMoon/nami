@@ -9,7 +9,6 @@ dotenv.config({ path: '.env.local' });
 
 import authRouter from './modules/auth/router';
 import restaurantRouter from './modules/restaurants/router';
-import menuRouter from './modules/menu/router';
 import dashboardRouter from './modules/dashboard/router';
 import adminRouter from './modules/admin/router';
 import { errorHandler } from './middleware/errorHandler';
@@ -75,7 +74,6 @@ app.get('/health', (_req: Request, res: Response) => {
 // Routes
 app.use('/api/auth', authLimiter, authRouter);
 app.use('/api/restaurants', restaurantRouter);
-app.use('/api/menu', menuRouter);
 app.use('/api/dashboard/upload-url', uploadLimiter);
 app.use('/api/dashboard', dashboardRouter);
 app.use('/api/admin', adminRouter);

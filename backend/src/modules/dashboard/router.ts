@@ -10,6 +10,7 @@ import { generateSlug } from '../../utils/slug';
 import {
   updateRestaurantSchema,
   createCategorySchema,
+  reorderCategoriesSchema,
   createMenuItemSchema,
   updateMenuItemSchema,
   toPrismaCustomization,
@@ -45,6 +46,63 @@ router.get('/restaurant', async (req: Request, res: Response, next: NextFunction
     });
 
     res.json({ success: true, data: restaurant });
+  } catch (err) {
+    next(err);
+  }
+});
+
+/** Logo como data URL (mismo origen en el cliente) para QR / impresión sin problemas de CORS en canvas. */
+router.get('/restaurant/logo-data', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user?.restaurantId) throw new NotFoundError('Restaurante');
+
+    const row = await prisma.restaurant.findUnique({
+      where: { id: req.user.restaurantId },
+      select: { logoUrl: true },
+    });
+    const raw = row?.logoUrl?.trim();
+    if (!raw) {
+      res.json({ success: true, data: { dataUrl: null } });
+      return;
+    }
+
+    let target: URL;
+    try {
+      target = new URL(raw);
+    } catch {
+      res.json({ success: true, data: { dataUrl: null } });
+      return;
+    }
+    if (target.protocol !== 'http:' && target.protocol !== 'https:') {
+      res.json({ success: true, data: { dataUrl: null } });
+      return;
+    }
+
+    const controller = new AbortController();
+    const kill = setTimeout(() => controller.abort(), 12_000);
+    let fetchRes: globalThis.Response;
+    try {
+      fetchRes = await fetch(target.toString(), { signal: controller.signal });
+    } finally {
+      clearTimeout(kill);
+    }
+    if (!fetchRes.ok) {
+      res.json({ success: true, data: { dataUrl: null } });
+      return;
+    }
+
+    const buf = Buffer.from(await fetchRes.arrayBuffer());
+    if (buf.length > 4 * 1024 * 1024) {
+      throw new ApiError(413, 'El logo es demasiado grande');
+    }
+    const mime = fetchRes.headers.get('content-type')?.split(';')[0]?.trim() || 'image/png';
+    if (!mime.startsWith('image/')) {
+      res.json({ success: true, data: { dataUrl: null } });
+      return;
+    }
+
+    const b64 = buf.toString('base64');
+    res.json({ success: true, data: { dataUrl: `data:${mime};base64,${b64}` } });
   } catch (err) {
     next(err);
   }
@@ -86,11 +144,51 @@ router.post('/categories', async (req: Request, res: Response, next: NextFunctio
     if (!req.user?.restaurantId) throw new NotFoundError('Restaurante');
     const { name } = createCategorySchema.parse(req.body);
 
+    const agg = await prisma.menuCategory.aggregate({
+      where: { restaurantId: req.user.restaurantId },
+      _max: { order: true },
+    });
+    const nextOrder = (agg._max.order ?? -1) + 1;
+
     const category = await prisma.menuCategory.create({
-      data: { restaurantId: req.user.restaurantId, name, order: 0 },
+      data: { restaurantId: req.user.restaurantId, name, order: nextOrder },
     });
 
     res.status(201).json({ success: true, data: category });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/dashboard/categories/reorder — Orden del menú público
+router.patch('/categories/reorder', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user?.restaurantId) throw new NotFoundError('Restaurante');
+    const { categoryIds } = reorderCategoriesSchema.parse(req.body);
+    const restaurantId = req.user.restaurantId;
+
+    const existing = await prisma.menuCategory.findMany({
+      where: { restaurantId },
+      select: { id: true },
+    });
+    if (categoryIds.length !== existing.length) {
+      throw new ApiError(400, 'Debes enviar todas las categorías en el orden deseado');
+    }
+    const set = new Set(existing.map((c) => c.id));
+    if (new Set(categoryIds).size !== categoryIds.length) {
+      throw new ApiError(400, 'categoryIds no debe tener duplicados');
+    }
+    for (const id of categoryIds) {
+      if (!set.has(id)) throw new ApiError(400, 'ID de categoría inválido');
+    }
+
+    await prisma.$transaction(
+      categoryIds.map((id, index) =>
+        prisma.menuCategory.update({ where: { id }, data: { order: index } })
+      )
+    );
+
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }
@@ -223,6 +321,30 @@ router.delete('/items/:id', async (req: Request, res: Response, next: NextFuncti
   }
 });
 
+// PATCH /api/dashboard/items/:id/toggle — Cambiar disponibilidad
+router.patch('/items/:id/toggle', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    if (!req.user?.restaurantId) throw new NotFoundError('Restaurante');
+    const itemId = getSingleParam(req.params.id);
+    if (!itemId) throw new ApiError(400, 'ID de item inválido');
+
+    const item = await prisma.menuItem.findUnique({
+      where: { id: itemId },
+      include: { category: true },
+    });
+    if (!item || item.category.restaurantId !== req.user.restaurantId) throw new ForbiddenError();
+
+    const updated = await prisma.menuItem.update({
+      where: { id: itemId },
+      data: { isAvailable: !item.isAvailable },
+    });
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // POST /api/dashboard/upload-url — Presigned URL
 router.post('/upload-url', async (req: Request, res: Response, next: NextFunction) => {
   try {
@@ -233,7 +355,7 @@ router.post('/upload-url', async (req: Request, res: Response, next: NextFunctio
 
     const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
     const path = `restaurants/${req.user.restaurantId}/${Date.now()}-${safeName}`;
-    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'nami-uploads';
+    const bucket = process.env.SUPABASE_STORAGE_BUCKET || 'ñami-uploads';
     await ensureBucketExists(bucket);
 
     const { data, error } = await supabaseAdmin.storage

@@ -10,7 +10,7 @@ interface GeolocationState {
   requested: boolean;
 }
 
-const STORAGE_KEY = 'nami-user-location';
+const STORAGE_KEY = 'ñami-user-location';
 
 // Centro de Yumbo como fallback
 const YUMBO_CENTER = { lat: 3.5847, lng: -76.4953 };

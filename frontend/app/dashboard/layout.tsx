@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
-import { LayoutDashboard, UtensilsCrossed, User, QrCode, LogOut, ExternalLink } from 'lucide-react';
+import { LayoutDashboard, UtensilsCrossed, User, QrCode, LogOut, ExternalLink, Store } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { api } from '@/lib/api';
@@ -30,20 +30,12 @@ const HEADER_INNER_PX = '3.5rem';
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [token, setToken] = useState<string | null>(null);
   const [statusChecked, setStatusChecked] = useState(false);
 
   const pageTitle = useMemo(() => pathTitles[pathname] ?? 'Dashboard', [pathname]);
 
   useEffect(() => {
-    const t = localStorage.getItem('token');
-    if (!t) {
-      router.push('/login');
-      return;
-    }
-    setToken(t);
-
-    // Verificar status del restaurante
+    // Verificar sesión y status del restaurante vía cookie httpOnly
     api.get('/api/auth/me').then((res) => {
       const role = res.data?.user?.role;
       const status = res.data?.restaurant?.status;
@@ -56,35 +48,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         setStatusChecked(true);
       }
     }).catch(() => {
-      setStatusChecked(true);
+      router.push('/login');
     });
   }, [router]);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     clearTokenCookie();
     router.push('/login');
   };
 
-  if (!token || !statusChecked) return null;
+  if (!statusChecked) return null;
 
   return (
     <div className="h-svh min-h-0 overflow-hidden bg-n-50">
       {/* Sidebar — fija al viewport, fuera del scroll del contenido */}
       <aside
-        className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-n-100 bg-white md:flex"
+        className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-n-900 md:flex"
         aria-label="Navegación principal"
       >
         <div
-          className="border-b border-n-100 p-6"
+          className="border-b border-n-800 px-6 pb-5"
           style={{ paddingTop: 'max(1.5rem, var(--safe-top))' }}
         >
-          <Link href="/" className="font-display text-2xl font-bold text-primary">
+          <Link href="/" className="font-display text-2xl font-black tracking-tighter text-primary leading-none">
             ÑAMI
           </Link>
-          <p className="mt-1 text-xs text-n-400">Dashboard</p>
+          <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-n-500">Mi restaurante</p>
         </div>
-        <nav className="flex flex-1 flex-col space-y-1 overflow-y-auto px-3 py-4">
+        <nav className="flex flex-1 flex-col space-y-0.5 overflow-y-auto px-3 py-4">
           {navItems.map((item) => {
             const isActive = pathname === item.href;
             return (
@@ -92,30 +83,40 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  'relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium transition-colors',
-                  isActive ? 'text-primary' : 'text-n-600 hover:bg-n-50 hover:text-n-900'
+                  'relative flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all',
+                  isActive ? 'text-white' : 'text-n-400 hover:bg-n-800 hover:text-n-100'
                 )}
               >
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active"
-                    className="absolute inset-0 rounded-xl bg-primary/10"
+                    className="absolute inset-0 rounded-xl bg-primary/20 border border-primary/30"
                     transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                   />
                 )}
-                <item.icon className="relative z-10 h-5 w-5" />
+                <item.icon className={cn('relative z-10 h-4.5 w-4.5', isActive && 'text-primary')} />
                 <span className="relative z-10">{item.label}</span>
+                {isActive && (
+                  <span className="relative z-10 ml-auto w-1.5 h-1.5 rounded-full bg-primary" />
+                )}
               </Link>
             );
           })}
         </nav>
-        <div className="border-t border-n-100 p-3">
+        <div className="border-t border-n-800 p-3 space-y-0.5">
+          <Link
+            href="/feed"
+            className="flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-n-500 hover:bg-n-800 hover:text-n-100 transition-all"
+          >
+            <ExternalLink className="h-4.5 w-4.5" />
+            Ver mi página
+          </Link>
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-red-500 transition-colors hover:bg-red-50"
+            className="cursor-pointer flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-n-500 hover:bg-red-950 hover:text-red-400 transition-all"
           >
-            <LogOut className="h-5 w-5" />
+            <LogOut className="h-4.5 w-4.5" />
             Cerrar sesión
           </button>
         </div>
@@ -123,27 +124,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Top bar — fija al viewport; en desktop empieza a la derecha del sidebar */}
       <header
-        className="fixed left-0 right-0 top-0 z-40 border-b border-n-100 bg-white/95 backdrop-blur-md supports-backdrop-filter:bg-white/80 md:left-64"
+        className="fixed left-0 right-0 top-0 z-40 border-b border-n-100 bg-white/95 backdrop-blur-md md:left-64"
         style={{ paddingTop: 'var(--safe-top)' }}
       >
         <div className="flex h-14 shrink-0 items-center justify-between gap-3 px-4 md:px-6">
           <div className="flex min-w-0 items-center gap-2 md:gap-3">
-            <Link href="/" className="font-display text-lg font-bold text-primary md:hidden">
-              ÑAMI
-            </Link>
-            <span className="text-n-300 md:hidden" aria-hidden>
-              |
-            </span>
+            {/* Logo solo en mobile */}
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="w-7 h-7 rounded-lg bg-n-900 flex items-center justify-center">
+                <Store className="h-4 w-4 text-primary" />
+              </div>
+            </div>
             <p className="truncate text-base font-semibold text-n-900 md:text-lg">{pageTitle}</p>
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <Link
               href="/feed"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm font-medium text-primary hover:bg-primary/10 md:px-3"
+              className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-bold text-n-500 hover:bg-n-100 hover:text-n-700 transition-all uppercase tracking-wide"
             >
-              <span className="hidden sm:inline">Ver feed</span>
-              <span className="sm:hidden">Feed</span>
-              <ExternalLink className="h-3.5 w-3.5 opacity-80" aria-hidden />
+              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              Mi página
             </Link>
           </div>
         </div>
@@ -162,7 +162,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* Bottom nav — fija al viewport (solo móvil) */}
       <nav
-        className="fixed inset-x-0 bottom-0 z-50 border-t border-n-100 bg-white md:hidden"
+        className="fixed inset-x-0 bottom-0 z-50 bg-n-900 md:hidden"
         style={{ paddingBottom: 'var(--safe-bottom)' }}
         aria-label="Navegación inferior"
       >
@@ -185,13 +185,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <item.icon
                   className={cn(
                     'h-5 w-5 transition-colors',
-                    isActive ? 'text-primary' : 'text-n-400'
+                    isActive ? 'text-primary' : 'text-n-600'
                   )}
                 />
                 <span
                   className={cn(
-                    'text-[10px] font-medium transition-colors',
-                    isActive ? 'text-primary' : 'text-n-400'
+                    'text-[10px] font-semibold transition-colors',
+                    isActive ? 'text-primary' : 'text-n-600'
                   )}
                 >
                   {item.label}

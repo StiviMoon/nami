@@ -21,6 +21,6 @@ export const useFavorites = create<FavoritesStore>()(
         })),
       isFavorite: (restaurantId) => get().favorites.includes(restaurantId),
     }),
-    { name: 'nami-favorites' }
+    { name: 'ñami-favorites' }
   )
 );

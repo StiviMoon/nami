@@ -55,7 +55,6 @@ export default function RegisterPage() {
       };
       const res = await api.post('/api/auth/register', payload);
       if (res.success) {
-        localStorage.setItem('token', res.data.token);
         setTokenCookie(res.data.token);
         const status = res.data.restaurant?.status;
         if (status === 'PENDING') {

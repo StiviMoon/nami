@@ -31,7 +31,6 @@ export default function LoginPage() {
     try {
       const res = await api.post('/api/auth/login', { email, password });
       if (res.success) {
-        localStorage.setItem('token', res.data.token);
         setTokenCookie(res.data.token);
         const role = res.data.user?.role;
         const status = res.data.restaurant?.status;

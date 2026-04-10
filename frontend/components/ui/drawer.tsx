@@ -31,7 +31,7 @@ export function Drawer({ open, onClose, children, title, className, side = 'righ
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+            className="fixed inset-0 z-40 cursor-pointer bg-black/40 backdrop-blur-sm"
             onClick={onClose}
           />
           <motion.div
@@ -49,8 +49,9 @@ export function Drawer({ open, onClose, children, title, className, side = 'righ
               <div className="flex items-center justify-between border-b border-n-100 px-5 py-4">
                 <h2 className="text-lg font-display font-semibold text-n-900">{title}</h2>
                 <button
+                  type="button"
                   onClick={onClose}
-                  className="rounded-xl p-2 text-n-400 transition-colors hover:bg-n-50 hover:text-n-700"
+                  className="cursor-pointer rounded-xl p-2 text-n-400 transition-colors hover:bg-n-50 hover:text-n-700"
                 >
                   <X className="h-5 w-5" />
                 </button>

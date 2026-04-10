@@ -314,7 +314,7 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4"
+      className="fixed inset-0 z-50 flex cursor-pointer items-center justify-center bg-black/50 px-4"
       onClick={onClose}
     >
       <motion.div

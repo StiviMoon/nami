@@ -37,7 +37,8 @@ interface CartStore {
     deliveryMode: string,
     deliveryAddress?: string,
     deliveryPhone?: string,
-    customerName?: string
+    customerName?: string,
+    deliveryQuote?: { zoneName: string; fee: number } | null
   ) => string;
 }
 
@@ -94,7 +95,7 @@ export const useCart = create<CartStore>((set, get) => ({
 
   total: () => get().items.reduce((sum, i) => sum + i.price * i.quantity, 0),
 
-  buildWhatsAppUrl: (paymentMethod, deliveryMode, deliveryAddress, deliveryPhone, customerName) => {
+  buildWhatsAppUrl: (paymentMethod, deliveryMode, deliveryAddress, deliveryPhone, customerName, deliveryQuote) => {
     const s = get();
     const lines = s.items.map((i) => {
       const sub = i.price * i.quantity;
@@ -108,8 +109,18 @@ export const useCart = create<CartStore>((set, get) => ({
     });
     const itemsList = lines.join('\n');
 
-    const total = s.total().toLocaleString('es-CO');
+    const subtotal = s.total();
+    const subtotalStr = subtotal.toLocaleString('es-CO');
     const mode = deliveryMode === 'delivery' ? 'A domicilio' : 'Para recoger';
+
+    const totalLines =
+      deliveryMode === 'delivery' && deliveryQuote && deliveryQuote.fee >= 0
+        ? [
+            `SUBTOTAL (productos): $${subtotalStr}`,
+            `ENVIO (${sanitizeLine(deliveryQuote.zoneName)}): $${deliveryQuote.fee.toLocaleString('es-CO')}`,
+            `TOTAL (productos + envio): $${(subtotal + deliveryQuote.fee).toLocaleString('es-CO')}`,
+          ]
+        : [`TOTAL (productos): $${subtotalStr}`];
 
     const msg = [
       'HOLA, QUIERO REALIZAR ESTE PEDIDO:',
@@ -128,9 +139,9 @@ export const useCart = create<CartStore>((set, get) => ({
             `TELEFONO DE CONTACTO: ${sanitizeLine(deliveryPhone || '')}`,
           ]
         : []),
-      `TOTAL: $${total}`,
+      ...totalLines,
       '',
-      'ENVIADO DESDE NAMI',
+      'ENVIADO DESDE ÑAMI',
     ].join('\n');
 
     const phone = (s.restaurantWhatsapp || '').replace(/\D/g, '');

@@ -91,6 +91,9 @@ model Restaurant {
   // Horarios (JSON serializado)
   schedule       String?  @db.Text
 
+  /** Zonas de domicilio: [{ "name": "Yumbo", "price": 5000 }, ...] */
+  deliveryZones  Json?
+
   isActive       Boolean          @default(true)
   isClosed       Boolean          @default(false)
 

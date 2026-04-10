@@ -25,7 +25,7 @@ export function Toggle({ checked, onChange, label, description, disabled, size =
         disabled={disabled}
         onClick={() => onChange(!checked)}
         className={cn(
-          'relative inline-flex shrink-0 rounded-full transition-colors duration-200',
+          'relative inline-flex shrink-0 cursor-pointer rounded-full transition-colors duration-200',
           trackSize,
           checked ? 'bg-primary' : 'bg-n-200'
         )}

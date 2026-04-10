@@ -33,7 +33,7 @@ export function ClosedStoreModal({ isOpen, onClose, restaurantName, schedule }: 
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[150] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md"
+          className="fixed inset-0 z-[150] flex cursor-pointer items-center justify-center bg-black/90 p-6 backdrop-blur-md"
           onClick={onClose}
         >
           <motion.div

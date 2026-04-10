@@ -14,8 +14,14 @@ export const updateRestaurantSchema = z.object({
   category: z.string().optional(),
   logoUrl: nullableUrlInput,
   coverUrl: nullableUrlInput,
-  themePreset: z.enum(['SUNSET', 'FOREST', 'OCEAN', 'BERRY', 'MONO']).optional(),
-  menuStyle: z.enum(['ROUNDED', 'SOFT', 'MINIMAL']).optional(),
+  themePreset: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : v),
+    z.enum(['SUNSET', 'FOREST', 'OCEAN', 'BERRY', 'MONO']).optional()
+  ),
+  menuStyle: z.preprocess(
+    (v) => (v === '' || v === null || v === undefined ? undefined : v),
+    z.enum(['ROUNDED', 'SOFT', 'MINIMAL']).optional()
+  ),
   isClosed: z.boolean().optional(),
   latitude: z.preprocess(
     (v) => {
@@ -38,16 +44,33 @@ export const updateRestaurantSchema = z.object({
   primaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   secondaryColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).optional().nullable(),
   fontFamily: z.string().max(50).optional().nullable(),
-  menuLayout: z.enum(['grid', 'list']).optional().nullable(),
+  menuLayout: z.preprocess(
+    (v) => (v === '' ? null : v === undefined ? undefined : v),
+    z.enum(['grid', 'list']).optional().nullable()
+  ),
   bannerText: z.string().max(200).optional().nullable(),
   instagram: z.string().max(100).optional().nullable(),
   tiktok: z.string().max(100).optional().nullable(),
   facebook: z.string().max(100).optional().nullable(),
   schedule: z.string().optional().nullable(),
+  deliveryZones: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(120),
+        price: z.coerce.number().nonnegative().max(5_000_000),
+      })
+    )
+    .max(40)
+    .optional(),
 });
 
 export const createCategorySchema = z.object({
   name: z.string().min(2, 'Mínimo 2 caracteres'),
+});
+
+/** Orden completo de categorías del restaurante (mismo conjunto que en BD). */
+export const reorderCategoriesSchema = z.object({
+  categoryIds: z.array(z.string().cuid()).min(1),
 });
 
 export const menuCustomizationSchema = z

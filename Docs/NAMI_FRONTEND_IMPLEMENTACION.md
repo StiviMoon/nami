@@ -528,7 +528,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'nami-cart',
+      name: 'ñami-cart',
       version: 1,
     }
   )
@@ -653,7 +653,7 @@ export default function RootLayout({
 
 ## 🎨 LANDING PAGE MEJORADA
 
-Ver documento separado: `NAMI_LANDING_PREMIUM.md`
+Ver documento separado: `ÑAMI_LANDING_PREMIUM.md`
 
 ---
 
@@ -853,12 +853,12 @@ export const metadata: Metadata = {
   },
   openGraph: {
     type: 'website',
-    url: 'https://nami.app',
+    url: 'https://ñami.app',
     title: 'ÑAMI',
     description: 'Descubre restaurantes reales',
     images: [
       {
-        url: 'https://nami.app/og-image.png',
+        url: 'https://ñami.app/og-image.png',
         width: 1200,
         height: 630,
       },
@@ -912,10 +912,10 @@ import Image from 'next/image'
 ### 2. Code Splitting
 
 ```typescript
-// Use dynamic imports para componentes pesados
-import dynamic from 'next/dynamic'
+// Use dyñamic imports para componentes pesados
+import dyñamic from 'next/dyñamic'
 
-const HeavyChart = dynamic(
+const HeavyChart = dyñamic(
   () => import('@/components/dashboard/AnalyticsChart'),
   {
     loading: () => <div>Cargando...</div>,

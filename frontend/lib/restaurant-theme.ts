@@ -71,7 +71,7 @@ export function getMenuCardStyleClasses(style: MenuStyle | string | undefined) {
 export function getCustomThemeStyle(restaurant: {
   primaryColor?: string | null;
   secondaryColor?: string | null;
-  themePreset?: string;
+  themePreset?: string | null;
 }): React.CSSProperties {
   if (!restaurant.primaryColor) return {};
 

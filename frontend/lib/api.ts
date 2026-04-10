@@ -2,12 +2,6 @@ import { clearTokenCookie } from '@/lib/session-cookie';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8001';
 
-function getAuthHeaders(): Record<string, string> {
-  if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('token');
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function request<T = any>(method: string, path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API}${path}`, {
@@ -15,7 +9,6 @@ async function request<T = any>(method: string, path: string, body?: unknown): P
     credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
@@ -24,7 +17,6 @@ async function request<T = any>(method: string, path: string, body?: unknown): P
 
   if (res.status === 401) {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('token');
       clearTokenCookie();
       window.location.href = '/login';
     }

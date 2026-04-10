@@ -46,7 +46,7 @@ Abre ÑAMI → Feed de restaurantes
 - Configura su perfil: nombre, foto, descripción, dirección, horario, WhatsApp, categoría
 - Organiza su menú en categorías (ej: "Platos principales", "Bebidas", "Postres")
 - Agrega items (nombre, precio, foto, descripción, toggle activo/inactivo)
-- Obtiene un link único: `nami.app/el-rincon-paisa`
+- Obtiene un link único: `ñami.app/el-rincon-paisa`
 - Descarga un QR para imprimir en la puerta/mesa (según plan)
 - Ver: métricas básicas o avanzadas (según plan)
 
@@ -139,7 +139,7 @@ Hola! Hice un pedido desde ÑAMI 🍽️
 
 ### 4.5 Link y QR
 - Ruta: `/dashboard/qr`
-- Muestra: URL del restaurante (`nami.app/el-rincon-paisa`)
+- Muestra: URL del restaurante (`ñami.app/el-rincon-paisa`)
 - Botón copiar al portapapeles
 - QR generado (qrcode.js)
 - Botón descargar QR (solo Plan Pro)
@@ -156,7 +156,7 @@ Hola! Hice un pedido desde ÑAMI 🍽️
 | **Precio** | $0 | $29.900/mes |
 | **Máx items en menú** | 10 | Ilimitado |
 | **Perfil en feed** | Básico | Destacado (aparece primero) |
-| **Link propio** | `nami.app/slug` | `nami.app/slug` |
+| **Link propio** | `ñami.app/slug` | `ñami.app/slug` |
 | **QR descargable** | ❌ | ✅ |
 | **Métricas** | Ninguna | Visitantes, platos populares |
 | **Prioridad en búsqueda** | Normal | Alta |

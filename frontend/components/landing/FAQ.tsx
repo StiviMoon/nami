@@ -20,7 +20,7 @@ function FAQItem({ q, a }: { q: string; a: string }) {
     <div className="border-b border-n-200 py-4 sm:py-5">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex justify-between items-center text-left gap-3 sm:gap-4 min-h-12 sm:min-h-0"
+        className="flex min-h-12 w-full cursor-pointer items-center justify-between gap-3 text-left sm:min-h-0 sm:gap-4"
       >
         <span className="font-display font-semibold text-base sm:text-lg text-n-900 pr-2">{q}</span>
         <motion.span

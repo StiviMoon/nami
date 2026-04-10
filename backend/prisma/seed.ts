@@ -13,7 +13,7 @@ const supabaseAdmin = createClient(
 
 const restaurants = [
   {
-    email: 'demo1@nami.app',
+    email: 'demo1@ñami.app',
     password: 'demo1234',
     name: 'La Sazón de Yumbo',
     slug: 'la-sazon-de-yumbo',
@@ -49,7 +49,7 @@ const restaurants = [
     ],
   },
   {
-    email: 'demo2@nami.app',
+    email: 'demo2@ñami.app',
     password: 'demo1234',
     name: 'Burger Lab',
     slug: 'burger-lab',
@@ -97,7 +97,7 @@ const restaurants = [
     ],
   },
   {
-    email: 'demo3@nami.app',
+    email: 'demo3@ñami.app',
     password: 'demo1234',
     name: 'Sushi Yumbo',
     slug: 'sushi-yumbo',
@@ -125,7 +125,7 @@ const restaurants = [
     ],
   },
   {
-    email: 'demo4@nami.app',
+    email: 'demo4@ñami.app',
     password: 'demo1234',
     name: 'Empanadas Doña Rosa',
     slug: 'empanadas-dona-rosa',
@@ -161,7 +161,7 @@ const restaurants = [
     ],
   },
   {
-    email: 'demo5@nami.app',
+    email: 'demo5@ñami.app',
     password: 'demo1234',
     name: 'Pizza Nápoles',
     slug: 'pizza-napoles',
@@ -261,7 +261,7 @@ async function seed() {
 
   console.log('\n🎉 Seed completado!\n');
   console.log('Credenciales de prueba:');
-  console.log('  Email: demo1@nami.app ... demo5@nami.app');
+  console.log('  Email: demo1@ñami.app ... demo5@ñami.app');
   console.log('  Password: demo1234');
 }
 

@@ -34,6 +34,13 @@ export function RestaurantContent({ slug }: { slug: string }) {
         instagram?: string | null;
         tiktok?: string | null;
         facebook?: string | null;
+        themePreset?: string | null;
+        menuStyle?: string | null;
+        fontFamily?: string | null;
+        primaryColor?: string | null;
+        secondaryColor?: string | null;
+        menuLayout?: string | null;
+        deliveryZones?: unknown;
       }
     | undefined;
 
@@ -53,11 +60,11 @@ export function RestaurantContent({ slug }: { slug: string }) {
 
   if (isLoading) {
     return (
-      <main className="min-h-dvh bg-gray-50">
-        <Skeleton className="h-56 w-full rounded-none" />
-        <div className="max-w-4xl mx-auto px-4 -mt-10 relative z-10">
-          <div className="bg-white rounded-[2.5rem] p-6 shadow-lg border border-gray-100 space-y-4">
-            <Skeleton className="h-8 w-2/3" />
+      <main className="min-h-dvh bg-n-50">
+        <Skeleton className="h-52 w-full rounded-none" />
+        <div className="max-w-4xl mx-auto px-4 -mt-6 relative z-10">
+          <div className="bg-white rounded-t-[2.5rem] px-5 pt-6 pb-5 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] space-y-3">
+            <Skeleton className="h-7 w-2/3" />
             <Skeleton className="h-4 w-1/3" />
             <SkeletonText lines={2} />
           </div>
@@ -73,11 +80,11 @@ export function RestaurantContent({ slug }: { slug: string }) {
         title="Restaurante no encontrado"
         description="Este restaurante no existe o fue eliminado."
         action={
-          <Link href="/feed" className="text-[#E85D04] font-black hover:underline text-sm">
+          <Link href="/feed" className="text-primary font-black hover:underline text-sm">
             Volver al feed
           </Link>
         }
-        className="min-h-dvh bg-gray-50"
+        className="min-h-dvh bg-n-50"
       />
     );
   }

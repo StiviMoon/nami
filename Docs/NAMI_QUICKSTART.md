@@ -23,11 +23,11 @@ Resultado: Landing funcionando + API con autenticación
 
 ```bash
 # Opción A: Si tienes un repo existente
-cd nami
+cd ñami
 git pull
 
 # Opción B: Crear desde cero
-mkdir nami && cd nami
+mkdir ñami && cd ñami
 git init
 npm init -y
 mkdir apps
@@ -51,7 +51,7 @@ mkdir -p apps/{web,api,landing}
 ```bash
 cat > package.json << 'EOF'
 {
-  "name": "nami",
+  "name": "ñami",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -110,7 +110,7 @@ pnpm add \
 
 ### 2.3 Copiar landing page (15 min)
 
-Copiar la estructura de componentes del documento `NAMI_LANDING_PREMIUM.md`:
+Copiar la estructura de componentes del documento `ÑAMI_LANDING_PREMIUM.md`:
 
 ```bash
 mkdir -p src/components
@@ -129,7 +129,7 @@ mkdir -p src/components
 ### 2.4 Actualizar tailwind.config.js (5 min)
 
 ```bash
-# Copiar configuración de NAMI_LANDING_PREMIUM.md
+# Copiar configuración de ÑAMI_LANDING_PREMIUM.md
 ```
 
 ### 2.5 Crear app/page.tsx
@@ -270,7 +270,7 @@ EOF
 # Inicializar
 npx prisma init
 
-# Copiar schema.prisma del documento NAMI_BACKEND_IMPLEMENTACION.md
+# Copiar schema.prisma del documento ÑAMI_BACKEND_IMPLEMENTACION.md
 # (la versión simplificada)
 
 # Crear migration

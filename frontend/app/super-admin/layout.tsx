@@ -37,12 +37,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   const pageTitle = pathTitles[pathname] ?? 'Super Admin';
 
   useEffect(() => {
-    const t = localStorage.getItem('token');
-    if (!t) {
-      router.push('/login');
-      return;
-    }
-
     api.get('/api/auth/me').then((res) => {
       if (res.data?.user?.role !== 'ADMIN') {
         router.push('/dashboard');
@@ -84,7 +78,6 @@ export default function SuperAdminLayout({ children }: { children: React.ReactNo
   }, [ready, queryClient]);
 
   const handleLogout = useCallback(() => {
-    localStorage.removeItem('token');
     clearTokenCookie();
     router.push('/login');
   }, [router]);

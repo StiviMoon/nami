@@ -1,10 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { X, Plus, Minus, CheckCircle2, Truck, Store, AlertCircle, ShoppingBasket } from 'lucide-react';
+import {
+  X,
+  Plus,
+  Minus,
+  CheckCircle2,
+  Truck,
+  Store,
+  AlertCircle,
+  ShoppingBasket,
+  MessageCircle,
+} from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useOrderHistory } from '@/hooks/useOrderHistory';
 import { formatPrice } from '@/lib/utils';
+import type { DeliveryZone } from '@/lib/delivery-zones';
 
 const ACCENT = '#E85D04';
 
@@ -19,6 +30,8 @@ type Props = {
   onClose: () => void;
   restaurantName: string;
   restaurantSlug: string;
+  /** Si hay zonas, el cliente elige una y se suma el envío al total y al mensaje de WhatsApp. */
+  deliveryZones?: DeliveryZone[];
 };
 
 const payLabel: Record<string, string> = {
@@ -27,11 +40,18 @@ const payLabel: Record<string, string> = {
   transferencia: 'Transferencia',
 };
 
-export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: Props) {
+export function CartModal({
+  isOpen,
+  onClose,
+  restaurantName,
+  restaurantSlug,
+  deliveryZones = [],
+}: Props) {
   const cart = useCart();
   const orderHistory = useOrderHistory();
   const [step, setStep] = useState<Step>('review');
   const [deliveryType, setDeliveryType] = useState<'domicilio' | 'recoger'>('domicilio');
+  const [deliveryZoneKey, setDeliveryZoneKey] = useState('');
   const [formData, setFormData] = useState({
     nombre: '',
     telefono: '',
@@ -40,9 +60,20 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
     metodoPago: 'efectivo',
   });
 
-  if (!isOpen) return null;
+  const hasDeliveryZones = deliveryZones.length > 0;
+  const selectedZone =
+    hasDeliveryZones && deliveryZoneKey !== ''
+      ? (() => {
+          const i = Number(deliveryZoneKey);
+          if (!Number.isInteger(i) || i < 0 || i >= deliveryZones.length) return null;
+          return deliveryZones[i] ?? null;
+        })()
+      : null;
 
-  const total = cart.total();
+  const subtotal = cart.total();
+  const grandTotal =
+    subtotal + (deliveryType === 'domicilio' && selectedZone ? selectedZone.price : 0);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -55,21 +86,30 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
       validatePhone(formData.telefono) &&
       !!formData.metodoPago;
     if (deliveryType === 'domicilio') {
-      return baseValid && formData.direccion.trim().length > 5 && formData.barrio.trim().length > 3;
+      const zoneOk = !hasDeliveryZones || !!selectedZone;
+      const barrioOk = hasDeliveryZones || formData.barrio.trim().length > 3;
+      return baseValid && formData.direccion.trim().length > 5 && barrioOk && zoneOk;
     }
     return baseValid;
   };
 
+  if (!isOpen) return null;
+
   const handleFinalSubmit = () => {
     const method = payLabel[formData.metodoPago] || formData.metodoPago;
     const modeApi = deliveryType === 'domicilio' ? 'delivery' : 'recoger';
-    const address =
-      deliveryType === 'domicilio'
-        ? `${formData.direccion.trim()}, ${formData.barrio.trim()}`
-        : undefined;
+    const addressParts: string[] = [];
+    if (deliveryType === 'domicilio') {
+      if (selectedZone) addressParts.push(`Zona: ${selectedZone.name}`);
+      addressParts.push(formData.direccion.trim());
+      if (!hasDeliveryZones && formData.barrio.trim()) {
+        addressParts.push(`Barrio: ${formData.barrio.trim()}`);
+      }
+    }
+    const address = deliveryType === 'domicilio' ? addressParts.join(' · ') : undefined;
 
     const snapshotItems = [...cart.items];
-    const snapshotTotal = cart.total();
+    const snapshotTotal = grandTotal;
 
     orderHistory.addOrder({
       restaurantName,
@@ -80,12 +120,18 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
       deliveryMode: modeApi,
     });
 
+    const deliveryQuote =
+      deliveryType === 'domicilio' && selectedZone
+        ? { zoneName: selectedZone.name, fee: selectedZone.price }
+        : null;
+
     const url = cart.buildWhatsAppUrl(
       method,
       modeApi,
       address,
       formData.telefono,
-      formData.nombre.trim()
+      formData.nombre.trim(),
+      deliveryQuote
     );
     window.open(url, '_blank');
     cart.clear();
@@ -97,6 +143,7 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
     setStep('review');
     setFormData({ nombre: '', telefono: '', direccion: '', barrio: '', metodoPago: 'efectivo' });
     setDeliveryType('domicilio');
+    setDeliveryZoneKey('');
   };
 
   return (
@@ -219,6 +266,25 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                 />
                 {deliveryType === 'domicilio' && (
                   <>
+                    {hasDeliveryZones && (
+                      <div className="space-y-2">
+                        <label className="block text-[10px] font-black uppercase tracking-wider text-gray-500">
+                          Zona de entrega *
+                        </label>
+                        <select
+                          value={deliveryZoneKey}
+                          onChange={(e) => setDeliveryZoneKey(e.target.value)}
+                          className={`${checkoutFieldClass} appearance-none cursor-pointer`}
+                        >
+                          <option value="">Elige tu zona…</option>
+                          {deliveryZones.map((z, idx) => (
+                            <option key={`${z.name}-${idx}`} value={String(idx)}>
+                              {z.name} — {formatPrice(z.price)}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <input
                       type="text"
                       name="direccion"
@@ -229,16 +295,18 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                       enterKeyHint="next"
                       className={checkoutFieldClass}
                     />
-                    <input
-                      type="text"
-                      name="barrio"
-                      value={formData.barrio}
-                      onChange={handleInputChange}
-                      placeholder="Barrio *"
-                      autoComplete="address-level2"
-                      enterKeyHint="done"
-                      className={checkoutFieldClass}
-                    />
+                    {!hasDeliveryZones && (
+                      <input
+                        type="text"
+                        name="barrio"
+                        value={formData.barrio}
+                        onChange={handleInputChange}
+                        placeholder="Barrio *"
+                        autoComplete="address-level2"
+                        enterKeyHint="done"
+                        className={checkoutFieldClass}
+                      />
+                    )}
                   </>
                 )}
                 <div className="grid grid-cols-3 gap-2">
@@ -283,18 +351,40 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
                     ))}
                   </div>
                 ))}
-                <div className="pt-2 flex justify-between items-center font-black">
-                  <span className="text-xs text-gray-800">TOTAL</span>
-                  <span className="text-2xl" style={{ color: ACCENT }}>
-                    {formatPrice(total)}
-                  </span>
+                <div className="space-y-2 border-t border-orange-100 pt-3">
+                  <div className="flex justify-between text-xs font-bold text-gray-700">
+                    <span>Subtotal</span>
+                    <span>{formatPrice(subtotal)}</span>
+                  </div>
+                  {deliveryType === 'domicilio' && selectedZone ? (
+                    <div className="flex justify-between text-xs font-bold text-gray-700">
+                      <span>Envío ({selectedZone.name})</span>
+                      <span>{formatPrice(selectedZone.price)}</span>
+                    </div>
+                  ) : null}
+                  <div className="flex justify-between items-center font-black pt-1">
+                    <span className="text-xs text-gray-800">TOTAL</span>
+                    <span className="text-2xl" style={{ color: ACCENT }}>
+                      {formatPrice(
+                        deliveryType === 'domicilio' && selectedZone ? grandTotal : subtotal
+                      )}
+                    </span>
+                  </div>
                 </div>
               </div>
-              {deliveryType === 'domicilio' && (
+              {deliveryType === 'domicilio' && !hasDeliveryZones && (
                 <div className="p-4 bg-blue-50 rounded-2xl flex gap-2 border border-blue-100 items-start">
                   <AlertCircle size={16} className="text-blue-500 shrink-0" />
                   <p className="text-[10px] font-bold text-blue-700 italic">
-                    El costo del domicilio será calculado por el restaurante.
+                    El costo del domicilio lo confirma el restaurante al recibir tu pedido.
+                  </p>
+                </div>
+              )}
+              {deliveryType === 'domicilio' && hasDeliveryZones && !selectedZone && (
+                <div className="p-4 bg-amber-50 rounded-2xl flex gap-2 border border-amber-100 items-start">
+                  <AlertCircle size={16} className="text-amber-600 shrink-0" />
+                  <p className="text-[10px] font-bold text-amber-900">
+                    Elige una zona en el paso anterior para ver el envío aquí.
                   </p>
                 </div>
               )}
@@ -318,9 +408,17 @@ export function CartModal({ isOpen, onClose, restaurantName, restaurantSlug }: P
         {step !== 'success' && (
           <div className="flex flex-col gap-3 border-t border-gray-100 bg-gray-50 p-6 pb-[max(1.5rem,var(--safe-bottom))] sm:pb-6">
             <div className="flex justify-between items-center mb-2 px-2">
-              <span className="text-[10px] font-black text-gray-400 uppercase">Subtotal</span>
+              <span className="text-[10px] font-black text-gray-400 uppercase">
+                {step === 'summary' && deliveryType === 'domicilio' && selectedZone
+                  ? 'Total estimado'
+                  : 'Subtotal'}
+              </span>
               <span className="text-xl font-black" style={{ color: ACCENT }}>
-                {formatPrice(total)}
+                {formatPrice(
+                  step === 'summary' && deliveryType === 'domicilio' && selectedZone
+                    ? grandTotal
+                    : subtotal
+                )}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3">
@@ -392,12 +490,41 @@ export function CartFloatingBarUix({
   cartCount,
   total,
   onOpen,
+  variant = 'dark',
 }: {
   cartCount: number;
   total: number;
   onOpen: () => void;
+  variant?: 'dark' | 'whatsapp';
 }) {
   if (cartCount <= 0) return null;
+
+  if (variant === 'whatsapp') {
+    return (
+      <div
+        className="fixed left-0 right-0 z-50 flex justify-center px-4 pointer-events-none"
+        style={{ bottom: 'calc(1.5rem + var(--safe-bottom))' }}
+      >
+        <button
+          type="button"
+          onClick={onOpen}
+          className="pointer-events-auto flex w-full max-w-md items-center justify-between rounded-2xl border border-[#20bd5a] bg-[#25D366] p-4 text-white shadow-[0_8px_30px_rgba(37,211,102,0.3)] transition-transform hover:scale-[1.02] hover:bg-[#20bd5a] active:scale-[0.99] cursor-pointer"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-sm font-bold">
+              {cartCount}
+            </div>
+            <span className="flex items-center gap-2 font-bold">
+              <MessageCircle size={20} aria-hidden />
+              Pedir por WhatsApp
+            </span>
+          </div>
+          <span className="text-lg font-bold tracking-wide">{formatPrice(total)}</span>
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed left-0 right-0 flex justify-center z-50 px-6" style={{ bottom: 'calc(1.5rem + var(--safe-bottom))' }}>
       <button

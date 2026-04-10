@@ -1,277 +1,429 @@
 'use client';
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { api } from '@/lib/api';
-import { Copy, ExternalLink, Download, Printer } from 'lucide-react';
-import { useRef, useCallback } from 'react';
+import { queryKeys } from '@/lib/queryKeys';
+import {
+  Copy,
+  ExternalLink,
+  Download,
+  Printer,
+  QrCode,
+  Link2,
+  Sparkles,
+  AlertCircle,
+} from 'lucide-react';
+import { useRef, useCallback, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
+import Link from 'next/link';
+import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from '@/components/ui/toast';
 import { PageTransition, FadeIn } from '@/components/motion';
 
-async function urlToDataUrl(imageUrl: string): Promise<string | null> {
-  try {
-    const res = await fetch(imageUrl, { mode: 'cors' });
-    if (!res.ok) return null;
-    const blob = await res.blob();
-    return await new Promise((resolve, reject) => {
-      const fr = new FileReader();
-      fr.onload = () => resolve(fr.result as string);
-      fr.onerror = () => reject(new Error('read'));
-      fr.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+type LogoDataResponse = { success: boolean; data: { dataUrl: string | null } };
+
+function inlineLogoInSvg(svg: SVGSVGElement, dataUrl: string | null) {
+  if (!dataUrl) return;
+  svg.querySelectorAll('image').forEach((node) => {
+    node.setAttribute('href', dataUrl);
+    node.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
+  });
 }
 
 export default function QRPage() {
   const qrRef = useRef<HTMLDivElement>(null);
   const printRef = useRef<HTMLDivElement>(null);
+  const qc = useQueryClient();
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['my-restaurant'],
-    queryFn: () => api.get('/api/dashboard/restaurant'),
+  const { data: res, isLoading } = useQuery({
+    queryKey: queryKeys.dashboard.restaurant,
+    queryFn: () => api.get<{ success: boolean; data: Record<string, unknown> }>('/api/dashboard/restaurant'),
   });
 
-  const restaurant = data?.data;
+  const restaurant = res?.data as
+    | {
+        slug?: string;
+        name?: string;
+        primaryColor?: string | null;
+        logoUrl?: string | null;
+        plan?: string;
+      }
+    | undefined;
 
-  const url = `${typeof window !== 'undefined' ? window.location.origin : ''}/${restaurant?.slug}`;
-  const qrColor = restaurant?.primaryColor || '#FF7A00';
+  const { data: logoDataUrl, isLoading: logoLoading } = useQuery({
+    queryKey: [...queryKeys.dashboard.restaurant, 'logo-data'] as const,
+    queryFn: async () => {
+      const json = await api.get<LogoDataResponse>('/api/dashboard/restaurant/logo-data');
+      return json.data?.dataUrl ?? null;
+    },
+    enabled: !!restaurant?.logoUrl?.trim(),
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const url = useMemo(() => {
+    if (typeof window === 'undefined' || !restaurant?.slug) return '';
+    return `${window.location.origin}/${restaurant.slug}`;
+  }, [restaurant?.slug]);
+
+  const qrColor = restaurant?.primaryColor?.trim() || '#FF7A00';
+  const isPro = restaurant?.plan === 'PRO';
+
+  /** Para el QR en pantalla: data URL evita CORS al exportar; si aún carga, URL pública como respaldo visual. */
+  const qrLogoSrc = logoDataUrl ?? restaurant?.logoUrl?.trim() ?? undefined;
 
   const copyLink = () => {
-    navigator.clipboard.writeText(url);
+    if (!url) return;
+    void navigator.clipboard.writeText(url);
     toast('Link copiado', 'success');
   };
 
   const downloadQR = useCallback(async () => {
     const svgEl = qrRef.current?.querySelector('svg');
-    if (!svgEl || !restaurant) return;
+    if (!svgEl || !restaurant?.slug) return;
 
-    const svg = svgEl.cloneNode(true) as SVGSVGElement;
-    if (restaurant.logoUrl) {
-      const dataUrl = await urlToDataUrl(restaurant.logoUrl);
-      if (dataUrl) {
-        svg.querySelectorAll('image').forEach((node) => {
-          const href =
-            node.getAttribute('href') || node.getAttributeNS('http://www.w3.org/1999/xlink', 'href');
-          if (href) {
-            node.setAttribute('href', dataUrl);
-            node.removeAttributeNS('http://www.w3.org/1999/xlink', 'href');
-          }
+    let inline = logoDataUrl;
+    if (restaurant.logoUrl?.trim() && !inline) {
+      try {
+        inline = await qc.fetchQuery({
+          queryKey: [...queryKeys.dashboard.restaurant, 'logo-data'] as const,
+          queryFn: async () => {
+            const json = await api.get<LogoDataResponse>('/api/dashboard/restaurant/logo-data');
+            return json.data?.dataUrl ?? null;
+          },
         });
+      } catch {
+        inline = null;
       }
     }
 
-    const isPro = restaurant.plan === 'PRO';
-    const qrSize = isPro ? 512 : 256;
-    const padding = 80;
-    const headerHeight = 100;
-    const footerHeight = 80;
+    const svg = svgEl.cloneNode(true) as SVGSVGElement;
+    inlineLogoInSvg(svg, inline ?? null);
+
+    const qrSize = isPro ? 512 : 280;
+    const padding = 72;
+    const headerHeight = 96;
+    const footerHeight = 72;
     const totalWidth = qrSize + padding * 2;
     const totalHeight = qrSize + padding * 2 + headerHeight + footerHeight;
 
+    const serializer = new XMLSerializer();
+    const svgData = serializer.serializeToString(svg);
+    const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const objectUrl = URL.createObjectURL(svgBlob);
+
     const canvas = document.createElement('canvas');
-    canvas.width = totalWidth;
-    canvas.height = totalHeight;
+    const scale = 2;
+    canvas.width = totalWidth * scale;
+    canvas.height = totalHeight * scale;
     const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    if (!ctx) {
+      URL.revokeObjectURL(objectUrl);
+      toast('No se pudo crear el canvas', 'error');
+      return;
+    }
 
-    const svgData = new XMLSerializer().serializeToString(svg);
+    ctx.scale(scale, scale);
+
     const img = new window.Image();
+    img.decoding = 'async';
+
+    const cleanup = () => URL.revokeObjectURL(objectUrl);
+
     img.onload = () => {
-      // Background
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(0, 0, totalWidth, totalHeight);
+      try {
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, totalWidth, totalHeight);
 
-      // Brand header
-      ctx.fillStyle = qrColor;
-      ctx.fillRect(0, 0, totalWidth, 6);
+        ctx.fillStyle = qrColor;
+        ctx.fillRect(0, 0, totalWidth, 5);
 
-      // Restaurant name
-      ctx.fillStyle = '#0F172A';
-      ctx.textAlign = 'center';
-      ctx.font = `bold ${isPro ? 32 : 24}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText(
-        restaurant.name || 'Mi Restaurante',
-        totalWidth / 2,
-        padding / 2 + headerHeight / 2,
-      );
+        ctx.fillStyle = '#0F172A';
+        ctx.textAlign = 'center';
+        ctx.font = `bold ${isPro ? 28 : 22}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+        ctx.fillText(restaurant.name?.trim() || 'Mi restaurante', totalWidth / 2, headerHeight * 0.45);
 
-      // Subtitle
-      ctx.fillStyle = '#94A3B8';
-      ctx.font = `${isPro ? 18 : 14}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText('Escanea para ver el menú', totalWidth / 2, padding / 2 + headerHeight / 2 + 30);
+        ctx.fillStyle = '#64748B';
+        ctx.font = `${isPro ? 16 : 13}px system-ui, -apple-system, sans-serif`;
+        ctx.fillText('Escanea para ver el menú', totalWidth / 2, headerHeight * 0.72);
 
-      // QR
-      ctx.drawImage(img, padding, headerHeight + padding / 2, qrSize, qrSize);
+        const qrY = headerHeight + padding * 0.35;
+        ctx.drawImage(img, padding, qrY, qrSize, qrSize);
 
-      // Footer
-      const footerY = headerHeight + padding / 2 + qrSize + 20;
-      ctx.fillStyle = '#CBD5E1';
-      ctx.font = `bold ${isPro ? 14 : 11}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText(url.replace(/^https?:\/\//, ''), totalWidth / 2, footerY + 10);
+        const footerY = qrY + qrSize + 18;
+        ctx.fillStyle = '#94A3B8';
+        ctx.font = `600 ${isPro ? 13 : 11}px system-ui, sans-serif`;
+        const urlShort = url.replace(/^https?:\/\//, '');
+        ctx.fillText(urlShort, totalWidth / 2, footerY);
 
-      // ÑAMI branding
-      ctx.fillStyle = qrColor;
-      ctx.font = `bold ${isPro ? 16 : 12}px system-ui, -apple-system, sans-serif`;
-      ctx.fillText('ÑAMI', totalWidth / 2, footerY + 40);
+        ctx.fillStyle = qrColor;
+        ctx.font = `800 ${isPro ? 15 : 12}px system-ui, sans-serif`;
+        ctx.fillText('ÑAMI', totalWidth / 2, footerY + 26);
 
-      // Border
-      ctx.strokeStyle = '#E2E8F0';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(1, 1, totalWidth - 2, totalHeight - 2);
+        ctx.strokeStyle = '#E2E8F0';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(1, 1, totalWidth - 2, totalHeight - 2);
 
-      const link = document.createElement('a');
-      link.download = `${restaurant.slug || 'qr'}-nami-printable.png`;
-      link.href = canvas.toDataURL('image/png');
-      link.click();
-      toast('QR descargado', 'success');
+        const link = document.createElement('a');
+        link.download = `${restaurant.slug}-ñami-qr.png`;
+        link.href = canvas.toDataURL('image/png', 1);
+        link.click();
+        toast('QR descargado con buena calidad', 'success');
+      } catch {
+        toast('No se pudo exportar el PNG (¿logo o red?)', 'error');
+      } finally {
+        cleanup();
+      }
     };
-    img.onerror = () => toast('No se pudo generar el PNG del QR', 'error');
-    img.src = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svgData)))}`;
-  }, [restaurant, qrColor, url]);
+
+    img.onerror = () => {
+      cleanup();
+      toast('No se pudo rasterizar el QR. Recarga e inténtalo de nuevo.', 'error');
+    };
+
+    img.src = objectUrl;
+  }, [restaurant, qrColor, url, isPro, logoDataUrl, qc]);
 
   const handlePrint = useCallback(() => {
     const el = printRef.current;
-    if (!el) return;
+    if (!el || !restaurant) return;
     const w = window.open('', '_blank');
-    if (!w) return;
+    if (!w) {
+      toast('Permite ventanas emergentes para imprimir', 'error');
+      return;
+    }
     w.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>QR ${restaurant?.name || ''}</title>
+        <title>QR ${restaurant.name || ''}</title>
+        <meta charset="utf-8" />
         <style>
-          body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif; }
-          .card { text-align: center; padding: 60px; border: 2px solid #E2E8F0; border-radius: 24px; max-width: 400px; }
-          .brand-line { height: 4px; background: ${qrColor}; border-radius: 2px; margin-bottom: 32px; }
-          h2 { margin: 0 0 8px; font-size: 28px; color: #0F172A; }
-          .sub { color: #94A3B8; font-size: 14px; margin-bottom: 32px; }
-          .qr { display: inline-block; }
-          .url { color: #CBD5E1; font-size: 12px; margin-top: 24px; font-weight: 600; }
-          .nami { color: ${qrColor}; font-size: 14px; font-weight: 800; margin-top: 16px; }
-          @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+          body { margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: system-ui, sans-serif; background: #f8fafc; }
+          .card { text-align: center; padding: 48px 40px; border: 2px solid #E2E8F0; border-radius: 28px; max-width: 420px; background: #fff; box-shadow: 0 20px 50px -12px rgba(15,23,42,0.12); }
+          .brand-line { height: 5px; background: ${qrColor}; border-radius: 3px; margin-bottom: 28px; }
+          h2 { margin: 0 0 8px; font-size: 26px; color: #0F172A; font-weight: 800; letter-spacing: -0.02em; }
+          .sub { color: #64748B; font-size: 14px; margin-bottom: 28px; }
+          .qr { display: inline-block; line-height: 0; }
+          .qr svg { display: block; }
+          .url { color: #94A3B8; font-size: 11px; margin-top: 20px; font-weight: 600; word-break: break-all; }
+          .ñami { color: ${qrColor}; font-size: 14px; font-weight: 800; margin-top: 14px; letter-spacing: 0.08em; }
+          @media print { body { background: #fff; } .card { box-shadow: none; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
         </style>
       </head>
       <body>
         <div class="card">
           <div class="brand-line"></div>
-          <h2>${restaurant?.name || ''}</h2>
+          <h2>${(restaurant.name || '').replace(/</g, '')}</h2>
           <p class="sub">Escanea para ver el menú</p>
           <div class="qr">${el.innerHTML}</div>
           <p class="url">${url.replace(/^https?:\/\//, '')}</p>
-          <p class="nami">ÑAMI</p>
+          <p class="ñami">ÑAMI</p>
         </div>
-        <script>window.onload=()=>{window.print();window.close();}<\/script>
+        <script>window.onload=function(){window.print();setTimeout(function(){window.close();},250);}<\/script>
       </body>
       </html>
     `);
     w.document.close();
   }, [restaurant, qrColor, url]);
 
-  if (isLoading) {
+  if (isLoading || !restaurant) {
     return (
-      <div className="space-y-8">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-96 w-full" />
+      <div className="space-y-6">
+        <Skeleton className="h-36 w-full rounded-3xl" />
+        <Skeleton className="h-64 w-full rounded-3xl" />
+        <Skeleton className="h-96 w-full rounded-3xl" />
       </div>
     );
   }
 
-  const isPro = restaurant?.plan === 'PRO';
+  if (!restaurant.slug) {
+    return (
+      <PageTransition>
+        <div className="rounded-3xl border-2 border-amber-200/80 bg-amber-50/90 p-8 text-center">
+          <AlertCircle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+          <p className="font-display text-lg font-bold text-n-900">Falta la URL de tu restaurante</p>
+          <p className="mt-2 text-sm text-n-600">Guarda el perfil con un nombre válido para generar el enlace público.</p>
+          <Link
+            href="/dashboard/perfil"
+            className="mt-6 inline-flex h-10 items-center justify-center rounded-xl border border-n-200 bg-primary px-4 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-dark"
+          >
+            Ir a perfil
+          </Link>
+        </div>
+      </PageTransition>
+    );
+  }
 
   return (
     <PageTransition>
-      <div className="space-y-8">
-        <h1 className="text-3xl font-display font-bold">Tu link y QR</h1>
+      <div className="space-y-8 pb-6">
+        <FadeIn>
+          <div className="relative overflow-hidden rounded-3xl border-2 border-n-200/90 bg-linear-to-br from-primary/12 via-white to-n-50/90 p-6 shadow-sm sm:p-8">
+            <div className="pointer-events-none absolute -right-8 -top-12 h-40 w-40 rounded-full bg-primary/20 blur-3xl" />
+            <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div className="min-w-0">
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Comparte tu menú</p>
+                <h1 className="mt-1 font-display text-2xl font-black tracking-tight text-n-900 sm:text-3xl">
+                  Link y código QR
+                </h1>
+                <p className="mt-2 max-w-xl text-sm text-n-500">
+                  Descarga un PNG listo para imprimir; el logo va incrustado para que no falle por CORS.
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Link
+                  href="/dashboard/perfil"
+                  className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-n-200 px-3 text-sm font-medium text-n-700 transition-all hover:border-n-300 hover:bg-n-50"
+                >
+                  Editar perfil
+                </Link>
+                <Link
+                  href="/dashboard/menu"
+                  className="inline-flex h-8 items-center justify-center gap-1.5 rounded-lg border border-n-200 px-3 text-sm font-medium text-n-700 transition-all hover:border-n-300 hover:bg-n-50"
+                >
+                  Editar menú
+                </Link>
+              </div>
+            </div>
+          </div>
+        </FadeIn>
 
         <FadeIn>
-          <div className="bg-white rounded-2xl p-8 border border-n-100 space-y-6">
-            {/* Link */}
-            <div>
-              <label className="block text-sm font-semibold text-n-700 mb-3">Tu página pública</label>
-              <div className="flex flex-col sm:flex-row gap-3">
-                <code className="flex-1 bg-n-50 px-5 py-3.5 rounded-xl border border-n-200 text-sm truncate">
+          <div className="overflow-hidden rounded-3xl border-2 border-n-200/85 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.045)]">
+            <div className="border-b border-n-100 bg-linear-to-r from-n-50/80 to-white px-5 py-4 sm:px-6">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                  <Link2 className="h-5 w-5" aria-hidden />
+                </span>
+                <div>
+                  <h2 className="font-display text-base font-black text-n-900 sm:text-lg">Tu página pública</h2>
+                  <p className="text-xs text-n-500">Mismo enlace que abren tus clientes desde el feed</p>
+                </div>
+              </div>
+            </div>
+            <div className="space-y-4 p-5 sm:p-6">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+                <code className="flex min-h-[52px] flex-1 items-center truncate rounded-2xl border-2 border-n-200/90 bg-n-50/80 px-4 py-3 text-sm font-medium text-n-800">
                   {url}
                 </code>
-                <div className="flex gap-2">
-                  <Button onClick={copyLink} icon={<Copy className="w-4 h-4" />}>
+                <div className="flex shrink-0 gap-2">
+                  <Button type="button" onClick={copyLink} icon={<Copy className="h-4 w-4" />}>
                     Copiar
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={() => window.open(url, '_blank')}
-                    icon={<ExternalLink className="w-4 h-4" />}
+                    icon={<ExternalLink className="h-4 w-4" />}
                   >
                     Abrir
                   </Button>
                 </div>
               </div>
             </div>
+          </div>
+        </FadeIn>
 
-            {/* QR */}
-            <div className="border-t border-n-100 pt-6">
-              <h3 className="font-display font-semibold text-lg mb-4">Código QR</h3>
-              <div className="bg-n-50 rounded-2xl p-8 text-center">
-                <div className="inline-block bg-white p-8 rounded-2xl shadow-sm border border-n-100">
-                  {/* Brand line */}
-                  <div className="h-1 rounded-full mb-5" style={{ backgroundColor: qrColor }} />
-                  <p className="font-display font-bold text-lg text-n-900 mb-1">
-                    {restaurant?.name}
-                  </p>
-                  <p className="text-xs text-n-400 mb-5">Escanea para ver el menú</p>
+        <FadeIn>
+          <div className="overflow-hidden rounded-3xl border-2 border-n-200/85 bg-white shadow-[0_2px_14px_rgba(15,23,42,0.045)]">
+            <div className="border-b border-n-100 bg-linear-to-r from-n-50/80 to-white px-5 py-4 sm:px-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 text-primary">
+                    <QrCode className="h-5 w-5" aria-hidden />
+                  </span>
+                  <div>
+                    <h2 className="font-display text-base font-black text-n-900 sm:text-lg">Código QR</h2>
+                    <p className="text-xs text-n-500">
+                      {restaurant.logoUrl
+                        ? logoLoading
+                          ? 'Incrustando logo para descarga…'
+                          : logoDataUrl
+                            ? 'Logo listo para PNG e impresión'
+                            : 'Sin logo en data URL; revisa que la imagen sea accesible'
+                        : 'Sin logo en el centro (súbelo en perfil)'}
+                    </p>
+                  </div>
+                </div>
+                {isPro && (
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-primary">
+                    <Sparkles className="h-3.5 w-3.5" />
+                    Alta resolución
+                  </span>
+                )}
+              </div>
+            </div>
 
-                  <div ref={qrRef}>
+            <div className="p-5 sm:p-8">
+              <div className="mx-auto max-w-md rounded-3xl border-2 border-n-200/80 bg-linear-to-b from-n-50/90 to-white p-6 text-center shadow-inner sm:p-8">
+                <motion.div
+                  className="inline-block rounded-3xl border-2 border-white bg-white p-6 shadow-md shadow-n-900/5 sm:p-8"
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <div className="mb-4 h-1.5 rounded-full" style={{ backgroundColor: qrColor }} />
+                  <p className="font-display text-lg font-black text-n-900">{restaurant.name}</p>
+                  <p className="mb-5 text-xs text-n-400">Escanea para ver el menú</p>
+
+                  <div ref={qrRef} className="flex justify-center">
                     <div ref={printRef}>
                       <QRCodeSVG
                         value={url}
-                        size={200}
+                        size={isPro ? 220 : 200}
                         fgColor={qrColor}
                         bgColor="#FFFFFF"
                         level="H"
                         includeMargin={false}
-                        imageSettings={restaurant?.logoUrl ? {
-                          src: restaurant.logoUrl,
-                          height: 40,
-                          width: 40,
-                          excavate: true,
-                        } : undefined}
+                        imageSettings={
+                          qrLogoSrc
+                            ? {
+                                src: qrLogoSrc,
+                                height: isPro ? 48 : 42,
+                                width: isPro ? 48 : 42,
+                                excavate: true,
+                              }
+                            : undefined
+                        }
                       />
                     </div>
                   </div>
 
-                  <p className="text-[10px] text-n-300 font-semibold mt-4 tracking-wide">
+                  <p className="mt-5 text-[10px] font-semibold tracking-wide text-n-300">
                     {url.replace(/^https?:\/\//, '')}
                   </p>
-                  <p className="text-xs font-bold mt-2" style={{ color: qrColor }}>
+                  <p className="mt-2 text-xs font-black tracking-widest" style={{ color: qrColor }}>
                     ÑAMI
                   </p>
-                </div>
+                </motion.div>
 
-                <p className="text-sm text-n-500 mt-5">
-                  Imprime este QR y pégalo en la puerta, mesas o volantes
+                <p className="mt-6 text-sm text-n-500">
+                  Imprime o descarga y úsalo en mesas, caja o volantes.
                 </p>
 
-                <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-center">
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
                   <Button
+                    type="button"
                     onClick={() => void downloadQR()}
-                    icon={<Download className="w-4 h-4" />}
+                    disabled={!!restaurant.logoUrl?.trim() && logoLoading}
+                    icon={<Download className="h-4 w-4" />}
                   >
-                    Descargar PNG ({isPro ? '512' : '256'}px)
+                    {logoLoading ? 'Preparando logo…' : `Descargar PNG (${isPro ? 'HD' : 'estándar'})`}
                   </Button>
                   <Button
+                    type="button"
                     variant="outline"
                     onClick={handlePrint}
-                    icon={<Printer className="w-4 h-4" />}
+                    icon={<Printer className="h-4 w-4" />}
                   >
                     Imprimir
                   </Button>
                 </div>
                 {!isPro && (
-                  <p className="text-xs text-n-400 mt-3">
-                    Actualiza a Pro para alta resolución (512px) y corrección de errores mejorada
+                  <p className="mt-4 text-xs text-n-400">
+                    Con <span className="font-semibold text-n-600">Plan Pro</span> el PNG sale más grande y nítido para carteles.
                   </p>
                 )}
               </div>

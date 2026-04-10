@@ -20,12 +20,10 @@ export default function PendingPage() {
   const [rejectionNote, setRejectionNote] = useState<string | null>(null);
 
   useEffect(() => {
-    const t = localStorage.getItem('token');
-    if (!t) {
+    if (!isLoading && !data) {
       router.push('/login');
-      return;
     }
-  }, [router]);
+  }, [isLoading, data, router]);
 
   useEffect(() => {
     if (!data) return;
@@ -64,7 +62,6 @@ export default function PendingPage() {
   useRealtimeRestaurant(data?.restaurant?.id, handleRealtimeUpdate);
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     clearTokenCookie();
     router.push('/login');
   };

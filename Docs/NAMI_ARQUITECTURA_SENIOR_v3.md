@@ -63,7 +63,7 @@ FRONTEND LAYER (Usuarios)
     ├── Complex UIs: Recharts (charts avanzados)
     ├── Real-time: Socket.io (órdenes)
     ├── File upload: Uppy + tus protocol
-    └── Performance: React.memo + dynamic imports
+    └── Performance: React.memo + dyñamic imports
 
 API GATEWAY & BACKEND
 ├── Runtime: Node.js 20 LTS
@@ -1545,7 +1545,7 @@ vercel.json:
   "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "env": {
-    "NEXT_PUBLIC_API_URL": "@nami_api_url",
+    "NEXT_PUBLIC_API_URL": "@ñami_api_url",
     "NEXT_PUBLIC_SUPABASE_URL": "@supabase_url",
     "NEXT_PUBLIC_ALGOLIA_APP_ID": "@algolia_app_id"
   },
@@ -1571,7 +1571,7 @@ vercel.json:
 render.yaml:
 services:
   - type: web
-    name: nami-api
+    name: ñami-api
     env: node
     plan: standard
     buildCommand: npm install && npm run build
